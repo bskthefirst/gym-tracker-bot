@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-05-19T20:16:59.617367Z",
+  "exported_at": "2026-05-19T21:43:57.363847Z",
   "workouts": [
+    {
+      "id": 102,
+      "date": "2026-05-19",
+      "day": "Tue",
+      "type": "Cardio",
+      "machine": "Incline Treadmill",
+      "duration_min": 41.78333333333333,
+      "calories": 412.0,
+      "adj_calories": 412.0,
+      "level": null,
+      "distance": 1.88,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": null,
+      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260519_164312.jpg",
+      "created_at": "2026-05-19 21:43:57"
+    },
     {
       "id": 101,
       "date": "2026-05-19",
@@ -910,8 +928,8 @@
   },
   "streak": 20,
   "prs": {
-    "Indoor Cycling": 483.0,
     "Incline Treadmill": 590.0,
+    "Indoor Cycling": 483.0,
     "Stair Master": 560.0,
     "Strength- Others": 82.0,
     "Bicep-Tricep Curl": 82.0
