@@ -594,8 +594,8 @@ def main() -> None:
 
     job_queue = application.job_queue
     job_queue.run_daily(daily_report, time=datetime.time(hour=config.DAILY_REPORT_HOUR, minute=0))
-    # Morning challenge — 5:00 PM CDT = ~7:00 AM KST
-    job_queue.run_daily(beat_yesterday_report, time=datetime.time(hour=17, minute=0))
+    # Morning challenge — Mon/Wed/Fri 8:10 AM CDT
+    job_queue.run_daily(beat_yesterday_report, time=datetime.time(hour=8, minute=10), days=(0, 2, 4))
     # Saturday 9:00 AM CDT (Mini local time)
     job_queue.run_daily(weekly_alert, time=datetime.time(hour=9, minute=0), days=(5,))
 
