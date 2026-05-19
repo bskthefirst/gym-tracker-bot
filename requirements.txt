@@ -1,2 +1,8 @@
 python-telegram-bot[job-queue]>=20.0
 python-dotenv
+openpyxl
+Pillow
+
+# Optional: LLM-based OCR (pick one)
+# openai
+# requests

@@ -1,0 +1,96 @@
+import os
+import base64
+import json
+import logging
+from typing import Optional
+
+logger = logging.getLogger(__name__)
+
+
+def _encode_image(path: str) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
+
+def llm_ocr(image_path: str) -> Optional[dict]:
+    """Optional LLM-based OCR. Falls back to None if no API key configured."""
+    openai_key = os.getenv("OPENAI_API_KEY")
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+
+    if not openai_key and not openrouter_key:
+        return None
+
+    base64_image = _encode_image(image_path)
+    prompt = (
+        "Extract workout stats from this gym machine screen photo. "
+        "Return ONLY a JSON object with keys: duration_min (float, minutes), "
+        "calories (int), distance (float, km if visible). "
+        "If a value is not visible, omit it or set to null."
+    )
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}"
+                    },
+                },
+            ],
+        }
+    ]
+
+    try:
+        if openrouter_key:
+            import requests
+            resp = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {openrouter_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": os.getenv("LLM_OCR_MODEL", "openai/gpt-4o-mini"),
+                    "messages": messages,
+                    "max_tokens": 300,
+                },
+                timeout=30,
+            )
+            resp.raise_for_status()
+            content = resp.json()["choices"][0]["message"]["content"]
+        elif openai_key:
+            import openai
+            client = openai.OpenAI(api_key=openai_key)
+            resp = client.chat.completions.create(
+                model=os.getenv("LLM_OCR_MODEL", "gpt-4o-mini"),
+                messages=messages,
+                max_tokens=300,
+            )
+            content = resp.choices[0].message.content
+        else:
+            return None
+
+        # Strip markdown fences
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.split("\n", 1)[1]
+        if content.endswith("```"):
+            content = content.rsplit("\n", 1)[0]
+        content = content.strip()
+
+        data = json.loads(content)
+        result = {}
+        if data.get("duration_min") is not None:
+            result["duration_min"] = float(data["duration_min"])
+        if data.get("calories") is not None:
+            result["calories"] = int(data["calories"])
+        if data.get("distance") is not None:
+            result["distance"] = float(data["distance"])
+        logger.info("LLM OCR result: %s", result)
+        return result
+    except Exception as e:
+        logger.error("LLM OCR failed: %s", e)
+        return None

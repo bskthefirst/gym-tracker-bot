@@ -5,6 +5,8 @@ Telegram bot for logging gym workouts. Runs on your Mac Mini, free forever.
 ## Features
 
 - **Photo upload**: Snap machine screen, send to bot. OCR pre-fills duration/calories/distance.
+  - Free: Tesseract OCR (local)
+  - Optional: LLM vision OCR (OpenAI or OpenRouter) if you add an API key
 - **Override**: If OCR is wrong, just type the correct number.
 - **Instant dashboard**: After every log, bot replies with today's total + 7-day averages.
 - **Daily report**: Auto message at 9 PM with day's summary.

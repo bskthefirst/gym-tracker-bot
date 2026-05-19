@@ -182,16 +182,23 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await file.download_to_drive(path)
     context.user_data["photo_path"] = path
 
-    # Try OCR if tesseract available
+    # Try LLM OCR first, then Tesseract fallback
     ocr_result = {}
     try:
-        import pytesseract
-        from PIL import Image
-        text = pytesseract.image_to_string(Image.open(path))
-        ocr_result = parse_ocr_text(text)
-        logger.info("OCR text: %s | parsed: %s", text, ocr_result)
+        from llm_ocr import llm_ocr
+        ocr_result = llm_ocr(path) or {}
     except Exception as e:
-        logger.info("OCR skipped: %s", e)
+        logger.info("LLM OCR skipped: %s", e)
+
+    if not ocr_result:
+        try:
+            import pytesseract
+            from PIL import Image
+            text = pytesseract.image_to_string(Image.open(path))
+            ocr_result = parse_ocr_text(text)
+            logger.info("Tesseract OCR text: %s | parsed: %s", text, ocr_result)
+        except Exception as e:
+            logger.info("Tesseract OCR skipped: %s", e)
 
     context.user_data["ocr"] = ocr_result
 
