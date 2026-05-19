@@ -1,7 +1,10 @@
 import sqlite3
 import datetime
+from zoneinfo import ZoneInfo
 from typing import Optional, List, Dict, Any
 from config import DB_PATH
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 def get_conn() -> sqlite3.Connection:
@@ -54,7 +57,7 @@ def init_db() -> None:
 
 
 def _today() -> str:
-    return datetime.date.today().isoformat()
+    return datetime.datetime.now(KST).date().isoformat()
 
 
 def _week_start(d: datetime.date) -> str:
@@ -122,7 +125,8 @@ def get_workouts_for_date(date: str) -> List[sqlite3.Row]:
 
 
 def get_recent_workouts(days: int = 7) -> List[sqlite3.Row]:
-    since = (datetime.date.today() - datetime.timedelta(days=days - 1)).isoformat()
+    today = datetime.datetime.now(KST).date()
+    since = (today - datetime.timedelta(days=days - 1)).isoformat()
     with get_conn() as conn:
         return conn.execute(
             "SELECT * FROM workouts WHERE date >= ? ORDER BY date DESC, id DESC",

@@ -79,7 +79,6 @@
             font-size: 0.8rem;
             font-weight: 600;
             color: #fff;
-            min-width: 40px;
         }
         .progress-bar-fill.warning { background: linear-gradient(90deg, #d29922, #daaa3f); }
         .progress-bar-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
@@ -129,8 +128,8 @@
         <div class="subtitle" id="date-label">Loading...</div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
-            <button class="tab" onclick="switchTab('database')">Database</button>
+            <button class="tab active" onclick="switchTab('dashboard', this)">Dashboard</button>
+            <button class="tab" onclick="switchTab('database', this)">Database</button>
         </div>
 
         <!-- Dashboard Tab -->
@@ -208,11 +207,19 @@
         let dbSortKey = 'date';
         let dbSortAsc = false;
 
-        function switchTab(name) {
+        function switchTab(name, el) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
+            el.classList.add('active');
             document.getElementById(name).classList.add('active');
+        }
+
+        function kstDateStr(offsetDays = 0) {
+            const now = new Date();
+            const kstDiffMin = now.getTimezoneOffset() + 540; // 540 = 9h for KST
+            const d = new Date(now.getTime() + kstDiffMin * 60 * 1000);
+            d.setDate(d.getDate() - offsetDays);
+            return d.toISOString().slice(0, 10);
         }
 
         function sortDB(key) {
@@ -262,14 +269,14 @@
             const res = await fetch('data/workouts.json?t=' + Date.now());
             const data = await res.json();
             allWorkouts = data.workouts || [];
-            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayStr = kstDateStr(0);
 
             const todayWorkouts = allWorkouts.filter(w => w.date === todayStr);
             const totalCal = todayWorkouts.reduce((s, w) => s + (w.calories || 0), 0);
             const totalMin = todayWorkouts.reduce((s, w) => s + (w.duration_min || 0), 0);
             const pct = Math.min(100, Math.round((totalCal / DAILY_GOAL) * 100));
 
-            document.getElementById('date-label').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+            document.getElementById('date-label').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'Asia/Seoul' });
             document.getElementById('today-cal').textContent = totalCal.toFixed(1);
             document.getElementById('today-min').textContent = totalMin.toFixed(1);
             document.getElementById('today-count').textContent = todayWorkouts.length;
@@ -285,8 +292,7 @@
             // 7-day
             const days = {};
             for (let i = 6; i >= 0; i--) {
-                const d = new Date(); d.setDate(d.getDate() - i);
-                days[d.toISOString().slice(0, 10)] = { cal: 0, mins: 0 };
+                days[kstDateStr(i)] = { cal: 0, mins: 0 };
             }
             allWorkouts.forEach(w => {
                 if (days[w.date]) {
@@ -331,8 +337,7 @@
             });
 
             // Recent table — only last 7 days
-            const since7 = new Date(); since7.setDate(since7.getDate() - 6);
-            const since7Str = since7.toISOString().slice(0, 10);
+            const since7Str = kstDateStr(6);
             const recent7 = allWorkouts.filter(w => w.date >= since7Str);
             document.getElementById('workout-table').innerHTML = recent7.map(w => {
                 const typeClass = w.type === 'Strength' ? 'badge-strength' : 'badge-cardio';
