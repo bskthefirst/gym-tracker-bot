@@ -269,13 +269,14 @@ async def duration_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 
 async def _ask_calories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    msg_obj = update.message or update.callback_query.message
     ocr = context.user_data.get("ocr", {})
     if ocr.get("calories"):
         context.user_data["calories"] = ocr["calories"]
         msg = f"Duration: {round(context.user_data['duration_min'])} min\nOCR calories: {ocr['calories']}\n\nReply with calories, or tap Skip to keep."
     else:
         msg = "Reply with calories shown on machine:"
-    await update.message.reply_text(msg, reply_markup=SKIP_KEYBOARD)
+    await msg_obj.reply_text(msg, reply_markup=SKIP_KEYBOARD)
     return CALORIES
 
 
@@ -302,13 +303,14 @@ async def calories_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 
 async def _ask_distance(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    msg_obj = update.message or update.callback_query.message
     ocr = context.user_data.get("ocr", {})
     if ocr.get("distance"):
         context.user_data["distance"] = ocr["distance"]
         msg = f"Calories: {context.user_data['calories']}\nOCR distance: {ocr['distance']} km\n\nReply with distance (km), or tap Skip to keep."
     else:
         msg = "Reply with distance (km), or tap Skip if not applicable:"
-    await update.message.reply_text(msg, reply_markup=SKIP_KEYBOARD)
+    await msg_obj.reply_text(msg, reply_markup=SKIP_KEYBOARD)
     return DISTANCE
 
 
@@ -340,7 +342,8 @@ async def distance_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 
 async def _ask_notes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(
+    msg_obj = update.message or update.callback_query.message
+    await msg_obj.reply_text(
         "Any notes? Reply with text, or tap Skip:", reply_markup=SKIP_KEYBOARD
     )
     return NOTES
@@ -379,7 +382,8 @@ async def _ask_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             InlineKeyboardButton("❌ Cancel", callback_data="cancel"),
         ]
     ]
-    await update.message.reply_text(summary, reply_markup=InlineKeyboardMarkup(keyboard))
+    msg_obj = update.message or update.callback_query.message
+    await msg_obj.reply_text(summary, reply_markup=InlineKeyboardMarkup(keyboard))
     return CONFIRM
 
 
