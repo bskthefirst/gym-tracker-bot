@@ -68,8 +68,10 @@ Telegram bot for logging gym workouts. Runs on your Mac Mini, free forever.
 4. Correct OCR values if needed (or /skip)
 5. Confirm → instant dashboard reply
 
-## Notes
+## Dashboard
 
-- Data lives in `gym.db` (SQLite) on the Mini
-- Photos saved to `photos/` folder
-- XLSX is **not** written to automatically; use `/export` when you want to update it
+Live dashboard at **https://bskthefirst.github.io/gym-tracker-bot/**
+
+- Dark theme, progress bar, 7-day chart, recent workouts table
+- Auto-updates every time you log a workout (bot exports JSON and pushes to GitHub)
+- View from any device, anywhere — no SSH needed
