@@ -65,13 +65,13 @@ def fmt_report(today_rows, avg7) -> str:
     else:
         for i, w in enumerate(today_rows, 1):
             name = w["machine"]
-            lines.append(f"  • {name} — {w['calories']} kcal ({w['duration_min']} min)")
+            lines.append(f"  • {name} — {w['calories']} kcal ({round(w['duration_min'])} min)")
     lines.append("")
     lines.append("📊 *Dashboard Now*")
     lines.append(f"  • Today calories burned: *{today['total_cal']}* kcal")
-    lines.append(f"  • Today workout time: *{today['total_min']}* min")
+    lines.append(f"  • Today workout time: *{round(today['total_min'])}* min")
     lines.append(f"  • 7-day avg calories/day: *{avg7['avg_cal']}* kcal/day")
-    lines.append(f"  • 7-day avg workout time/day: *{avg7['avg_min']}* min/day")
+    lines.append(f"  • 7-day avg workout time/day: *{round(avg7['avg_min'])}* min/day")
     need = round(config.DAILY_GOAL_KCAL - today["total_cal"], 1)
     if need > 0:
         lines.append(f"  • Need *{need}* more kcal to hit {config.DAILY_GOAL_KCAL}")
@@ -152,7 +152,7 @@ async def week_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f"  • {w['date']} {w['day']} — {w['machine']} {w['calories']} kcal"
         )
     lines.append("")
-    lines.append(f"7-day avg: *{avg7['avg_cal']}* kcal/day, *{avg7['avg_min']}* min/day")
+    lines.append(f"7-day avg: *{avg7['avg_cal']}* kcal/day, *{round(avg7['avg_min'])}* min/day")
     await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
 
 
@@ -207,7 +207,7 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     pre = []
     if ocr_result.get("duration_min"):
-        pre.append(f"Duration: {ocr_result['duration_min']:.1f} min")
+        pre.append(f"Duration: {round(ocr_result['duration_min'])} min")
     if ocr_result.get("calories"):
         pre.append(f"Calories: {ocr_result['calories']} kcal")
     if ocr_result.get("distance"):
@@ -238,7 +238,7 @@ async def type_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if ocr.get("duration_min"):
         context.user_data["duration_min"] = ocr["duration_min"]
         await query.edit_message_text(
-            f"Machine: {machine}\nOCR duration: {ocr['duration_min']:.1f} min\n\nReply with duration in minutes, or tap Skip to keep."
+            f"Machine: {machine}\nOCR duration: {round(ocr['duration_min'])} min\n\nReply with duration in minutes, or tap Skip to keep."
         )
         await query.message.reply_text("Duration:", reply_markup=SKIP_KEYBOARD)
     else:
@@ -272,7 +272,7 @@ async def _ask_calories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     ocr = context.user_data.get("ocr", {})
     if ocr.get("calories"):
         context.user_data["calories"] = ocr["calories"]
-        msg = f"Duration: {context.user_data['duration_min']} min\nOCR calories: {ocr['calories']}\n\nReply with calories, or tap Skip to keep."
+        msg = f"Duration: {round(context.user_data['duration_min'])} min\nOCR calories: {ocr['calories']}\n\nReply with calories, or tap Skip to keep."
     else:
         msg = "Reply with calories shown on machine:"
     await update.message.reply_text(msg, reply_markup=SKIP_KEYBOARD)
@@ -365,7 +365,7 @@ async def _ask_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     summary = (
         f"Confirm log:\n"
         f"  • {d['machine']} ({d['workout_type']})\n"
-        f"  • {d['duration_min']} min\n"
+        f"  • {round(d['duration_min'])} min\n"
         f"  • {d['calories']} kcal"
     )
     if "distance" in d:
@@ -519,7 +519,7 @@ async def beat_yesterday_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     yesterday = db.get_yesterday_summary()
     today_so_far = db.get_today_summary()
     lines = ["🌅 *Morning Challenge*"]
-    lines.append(f"Yesterday: *{yesterday['total_cal']}* kcal, *{yesterday['total_min']}* min")
+    lines.append(f"Yesterday: *{yesterday['total_cal']}* kcal, *{round(yesterday['total_min'])}* min")
     if today_so_far["total_cal"] > 0:
         lines.append(f"So far today: *{today_so_far['total_cal']}* kcal")
     if yesterday["total_cal"] > 0:
@@ -541,7 +541,7 @@ async def weekly_alert(context: ContextTypes.DEFAULT_TYPE) -> None:
     min_gap = round(target_min - summary["total_min"], 1)
     lines = [f"📅 *Week of {summary['week_start']}*"]
     lines.append(f"  • Calories: *{summary['total_cal']}* / {target_cal} kcal")
-    lines.append(f"  • Cardio time: *{summary['total_min']}* / {target_min} min")
+    lines.append(f"  • Cardio time: *{round(summary['total_min'])}* / {target_min} min")
     lines.append(f"  • Workouts: *{summary['workout_count']}* on *{summary['days_with_workouts']}* days")
     lines.append("")
     if cal_gap > 0 and min_gap > 0:
