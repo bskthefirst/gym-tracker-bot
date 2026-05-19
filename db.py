@@ -201,6 +201,11 @@ def get_today_summary(date: Optional[str] = None) -> Dict[str, Any]:
     }
 
 
+def get_yesterday_summary() -> Dict[str, Any]:
+    yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+    return get_today_summary(yesterday)
+
+
 def get_streak() -> int:
     with get_conn() as conn:
         rows = conn.execute("SELECT DISTINCT date FROM workouts ORDER BY date DESC").fetchall()

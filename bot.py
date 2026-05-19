@@ -513,6 +513,24 @@ async def daily_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_message(chat_id=config.USER_ID, text=text, parse_mode="Markdown")
 
 
+async def beat_yesterday_report(context: ContextTypes.DEFAULT_TYPE) -> None:
+    yesterday = db.get_yesterday_summary()
+    today_so_far = db.get_today_summary()
+    lines = ["🌅 *Morning Challenge*"]
+    lines.append(f"Yesterday: *{yesterday['total_cal']}* kcal, *{yesterday['total_min']}* min")
+    if today_so_far["total_cal"] > 0:
+        lines.append(f"So far today: *{today_so_far['total_cal']}* kcal")
+    if yesterday["total_cal"] > 0:
+        need = round(yesterday["total_cal"] - today_so_far["total_cal"], 1)
+        if need > 0:
+            lines.append(f"🎯 Beat yesterday: need *{need}* more kcal")
+        else:
+            lines.append("🎯 Already beat yesterday!")
+    else:
+        lines.append("No workout yesterday. Today is a fresh start.")
+    await context.bot.send_message(chat_id=config.USER_ID, text="\n".join(lines), parse_mode="Markdown")
+
+
 async def weekly_alert(context: ContextTypes.DEFAULT_TYPE) -> None:
     summary = db.get_week_summary()
     target_cal = config.DAILY_GOAL_KCAL * 7
@@ -576,6 +594,8 @@ def main() -> None:
 
     job_queue = application.job_queue
     job_queue.run_daily(daily_report, time=datetime.time(hour=config.DAILY_REPORT_HOUR, minute=0))
+    # Morning challenge — 5:00 PM CDT = ~7:00 AM KST
+    job_queue.run_daily(beat_yesterday_report, time=datetime.time(hour=17, minute=0))
     # Saturday 9:00 AM CDT (Mini local time)
     job_queue.run_daily(weekly_alert, time=datetime.time(hour=9, minute=0), days=(5,))
 
