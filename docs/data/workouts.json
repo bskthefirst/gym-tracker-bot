@@ -1,44 +1,44 @@
 {
-  "exported_at": "2026-05-19T18:55:53.049208Z",
+  "exported_at": "2026-05-19T19:05:26.744697Z",
   "workouts": [
     {
-      "id": 2,
+      "id": 100,
       "date": "2026-05-19",
       "day": "Tue",
       "type": "Cardio",
       "machine": "Treadmill",
-      "duration_min": 32.47,
-      "calories": 307.0,
-      "adj_calories": 307.0,
-      "level": "18 incline; 3.2 km/h",
-      "distance": null,
-      "floors_steps": null,
-      "weight_load": null,
-      "sets_reps": null,
-      "notes": "Earlier treadmill session",
-      "photo_path": null,
-      "created_at": "2026-05-19 18:52:09"
-    },
-    {
-      "id": 1,
-      "date": "2026-05-19",
-      "day": "Tue",
-      "type": "Cardio",
-      "machine": "Treadmill",
-      "duration_min": 30.4,
+      "duration_min": 30.916666666666668,
       "calories": 309.0,
       "adj_calories": 309.0,
-      "level": "Level 5",
-      "distance": null,
+      "level": "Treadmill",
+      "distance": 0.88,
       "floors_steps": null,
       "weight_load": null,
       "sets_reps": null,
-      "notes": null,
+      "notes": "Tuesday treadmill; corrected screen read: 309 calories, 0.88 mi, time 30:55.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:14:04"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 49,
+      "id": 99,
+      "date": "2026-05-19",
+      "day": "Tue",
+      "type": "Cardio",
+      "machine": "Treadmill",
+      "duration_min": 32.46666666666667,
+      "calories": 307.0,
+      "adj_calories": 307.0,
+      "level": "Treadmill",
+      "distance": 0.88,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": "Tuesday treadmill; screen shows 32:28, 0.88 mi, 307 calories.",
+      "photo_path": null,
+      "created_at": "2026-05-19 19:02:31"
+    },
+    {
+      "id": 98,
       "date": "2026-05-18",
       "day": "Mon",
       "type": "Cardio",
@@ -53,10 +53,10 @@
       "sets_reps": null,
       "notes": "Monday indoor cycle; screen shows 266 calories, distance 8.09, time 41:01, level 10, watts/HR ~62.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 48,
+      "id": 97,
       "date": "2026-05-18",
       "day": "Mon",
       "type": "Cardio",
@@ -71,10 +71,10 @@
       "sets_reps": null,
       "notes": "Monday indoor cycle; corrected screen read: 266 calories, distance 8.14, time 42:50, level 10, watts/HR ~57.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 47,
+      "id": 96,
       "date": "2026-05-18",
       "day": "Mon",
       "type": "Cardio",
@@ -89,10 +89,10 @@
       "sets_reps": null,
       "notes": "Monday treadmill; screen shows 31:22, 0.88 mi, 310 calories.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 46,
+      "id": 95,
       "date": "2026-05-18",
       "day": "Mon",
       "type": "Cardio",
@@ -107,10 +107,10 @@
       "sets_reps": null,
       "notes": "Monday StairMaster; corrected screen read: 511 calories, SPM 48, time 61:00, level 8, 133 floors climbed.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 45,
+      "id": 94,
       "date": "2026-05-17",
       "day": "Sun",
       "type": "Cardio",
@@ -125,10 +125,10 @@
       "sets_reps": null,
       "notes": "Sunday indoor cycle; screen shows 440 calories, distance 12.9, time 59:03, level 11, watts/HR ~80.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 44,
+      "id": 93,
       "date": "2026-05-17",
       "day": "Sun",
       "type": "Cardio",
@@ -143,10 +143,10 @@
       "sets_reps": null,
       "notes": "Sunday indoor cycle; screen shows 442 calories, distance 13.1, time 60:52, level 11, watts/HR ~77.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 43,
+      "id": 92,
       "date": "2026-05-17",
       "day": "Sun",
       "type": "Cardio",
@@ -161,10 +161,10 @@
       "sets_reps": null,
       "notes": "Sunday incline treadmill; screen shows 30:32, 0.96 mi, 755 ft climbed, 299 calories, avg speed 1.8 mph, METS 6.3, watts 139.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 42,
+      "id": 91,
       "date": "2026-05-16",
       "day": "Sat",
       "type": "Cardio",
@@ -179,10 +179,10 @@
       "sets_reps": null,
       "notes": "Saturday indoor cycle; screen shows 343 calories, distance 10.2, time 48:19, level 11, watts/HR ~74.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 41,
+      "id": 90,
       "date": "2026-05-16",
       "day": "Sat",
       "type": "Cardio",
@@ -197,10 +197,10 @@
       "sets_reps": null,
       "notes": "Saturday treadmill; screen shows 34:17, 0.68 mi, 252 calories.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 40,
+      "id": 89,
       "date": "2026-05-16",
       "day": "Sat",
       "type": "Cardio",
@@ -215,10 +215,10 @@
       "sets_reps": null,
       "notes": "Saturday indoor cycle; screen shows 370 calories, distance 11.5, time 58:22, level 9, watts/HR ~60.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 39,
+      "id": 88,
       "date": "2026-05-15",
       "day": "Fri",
       "type": "Cardio",
@@ -233,10 +233,10 @@
       "sets_reps": null,
       "notes": "Friday indoor cycle; screen shows 432 calories, distance 12.8, time 60:00, level 11, watts/HR ~75.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 38,
+      "id": 87,
       "date": "2026-05-14",
       "day": "Thu",
       "type": "Cardio",
@@ -251,10 +251,10 @@
       "sets_reps": null,
       "notes": "Thursday indoor cycle; screen shows 444 calories, distance 13.2, time 61:23, level 18, watts/HR ~78.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 37,
+      "id": 86,
       "date": "2026-05-14",
       "day": "Thu",
       "type": "Cardio",
@@ -269,10 +269,10 @@
       "sets_reps": null,
       "notes": "Thursday indoor cycle; screen shows 221 calories, distance 6.74, time 35:00, level 9, watts/HR ~59.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 36,
+      "id": 85,
       "date": "2026-05-14",
       "day": "Thu",
       "type": "Cardio",
@@ -287,10 +287,10 @@
       "sets_reps": null,
       "notes": "Thursday indoor cycle; screen shows 398 calories, distance 12.0, time 60:35, level 10, watts/HR ~64.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 35,
+      "id": 84,
       "date": "2026-05-13",
       "day": "Wed",
       "type": "Cardio",
@@ -305,10 +305,10 @@
       "sets_reps": null,
       "notes": "Wednesday indoor cycle; screen shows 258 calories, distance 7.67, time 39:54, level 10, watts/HR ~58.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 34,
+      "id": 83,
       "date": "2026-05-13",
       "day": "Wed",
       "type": "Cardio",
@@ -323,10 +323,10 @@
       "sets_reps": null,
       "notes": "Wednesday indoor cycle; screen shows 212 calories, distance 6.55, time 34:55, level 10, watts/HR ~55.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 33,
+      "id": 82,
       "date": "2026-05-12",
       "day": "Tue",
       "type": "Cardio",
@@ -341,10 +341,10 @@
       "sets_reps": null,
       "notes": "Tuesday additional indoor cycle; screen shows 305 calories, distance 8.30, time 30:00, level 2, watts/HR ~32.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 32,
+      "id": 81,
       "date": "2026-05-12",
       "day": "Tue",
       "type": "Strength",
@@ -359,10 +359,10 @@
       "sets_reps": "9 sets",
       "notes": "Tuesday leg press machine; user reported 5 minutes / 9 sets. Calories estimated via MET formula: 3.5 MET \u00d7 3.5 \u00d7 87.5 kg \u00f7 200 \u00d7 5 min \u2248 27 kcal.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 31,
+      "id": 80,
       "date": "2026-05-12",
       "day": "Tue",
       "type": "Cardio",
@@ -377,10 +377,10 @@
       "sets_reps": null,
       "notes": "Tuesday indoor cycle; 462 calories total, distance 10.8, time 51:29, level 13, watts/HR ~72.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 30,
+      "id": 79,
       "date": "2026-05-11",
       "day": "Mon",
       "type": "Cardio",
@@ -395,10 +395,10 @@
       "sets_reps": null,
       "notes": "Monday incline treadmill; screen shows 50:38, 1.62 mi, 1,280 ft climbed, 424 calories, avg speed 1.9 mph, METS 6.3, watts 115.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 29,
+      "id": 78,
       "date": "2026-05-10",
       "day": "Sun",
       "type": "Cardio",
@@ -413,10 +413,10 @@
       "sets_reps": null,
       "notes": "Sunday indoor cycle; CORRECTED: screen shows 370 calories, distance 11.2, time 55:19, level 18, watts/HR ~66",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 28,
+      "id": 77,
       "date": "2026-05-09",
       "day": "Sat",
       "type": "Cardio",
@@ -431,10 +431,10 @@
       "sets_reps": null,
       "notes": "Saturday indoor cycle; screen shows 209 calories, distance 6.30, time 30:36, level 12, watts/HR ~64",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 27,
+      "id": 76,
       "date": "2026-05-09",
       "day": "Sat",
       "type": "Strength",
@@ -449,10 +449,10 @@
       "sets_reps": "5 sets",
       "notes": "Saturday MTS row machine; user reported 10 minutes / 5 sets. Calories estimated via MET formula: 3.5 MET \u00d7 3.5 \u00d7 87.5 kg \u00f7 200 \u00d7 10 min \u2248 54 kcal.",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 26,
+      "id": 75,
       "date": "2026-05-09",
       "day": "Sat",
       "type": "Cardio",
@@ -467,10 +467,10 @@
       "sets_reps": null,
       "notes": "Saturday StairMaster; screen shows 543 calories, SPM 44, time 52:51, level 4, 142 floors",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 25,
+      "id": 74,
       "date": "2026-05-08",
       "day": "Fri",
       "type": "Cardio",
@@ -485,10 +485,10 @@
       "sets_reps": null,
       "notes": "Friday incline treadmill; screen shows 53:53, 1.59 mi, 558 calories; user reported 18 incline",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 24,
+      "id": 73,
       "date": "2026-05-07",
       "day": "Thu",
       "type": "Cardio",
@@ -503,10 +503,10 @@
       "sets_reps": null,
       "notes": "Thursday indoor cycle; screen shows 249 calories, distance 7.49, time 38:48, level 12, watts/HR ~88",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 23,
+      "id": 72,
       "date": "2026-05-07",
       "day": "Thu",
       "type": "Cardio",
@@ -521,10 +521,10 @@
       "sets_reps": null,
       "notes": "Thursday indoor cycle; screen shows 446 calories, distance 13.4, time 65:01, level 11, watts/HR ~69",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 22,
+      "id": 71,
       "date": "2026-05-07",
       "day": "Thu",
       "type": "Cardio",
@@ -539,10 +539,10 @@
       "sets_reps": null,
       "notes": "Thursday incline treadmill; screen shows 51:07, 1.57 mi, 590 calories; incline/speed not visible",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 21,
+      "id": 70,
       "date": "2026-05-06",
       "day": "Wed",
       "type": "Cardio",
@@ -557,10 +557,10 @@
       "sets_reps": null,
       "notes": "Wednesday indoor bike; screen shows 280 calories, distance 6.57, time 31:02, level 10, watts/HR ~79",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 20,
+      "id": 69,
       "date": "2026-05-06",
       "day": "Wed",
       "type": "Cardio",
@@ -575,10 +575,10 @@
       "sets_reps": null,
       "notes": "Wednesday indoor bike; screen shows 263 calories, distance 7.61, time 37:02, level 10, watts/HR ~69",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 19,
+      "id": 68,
       "date": "2026-05-06",
       "day": "Wed",
       "type": "Cardio",
@@ -593,10 +593,10 @@
       "sets_reps": null,
       "notes": "Wednesday indoor bike; screen shows 284 calories, distance 8.65, time 44:02, level 10, watts/HR ~81",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 18,
+      "id": 67,
       "date": "2026-05-06",
       "day": "Wed",
       "type": "Cardio",
@@ -611,10 +611,10 @@
       "sets_reps": null,
       "notes": "Wednesday StairMaster; screen shows 560 calories, SPM 30, time 60:41, level 3, 144 floors",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 17,
+      "id": 66,
       "date": "2026-05-05",
       "day": "Tue",
       "type": "Cardio",
@@ -629,10 +629,10 @@
       "sets_reps": null,
       "notes": "Tuesday May 5 indoor bike; screen shows 62:23, 440 calories, level 10, distance 13.0, watts/HR ~73",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 16,
+      "id": 65,
       "date": "2026-05-05",
       "day": "Tue",
       "type": "Cardio",
@@ -647,10 +647,10 @@
       "sets_reps": null,
       "notes": "Tuesday incline treadmill; screen shows 30:23, 249 calories, 1.50 km; user reported 18 incline and 3.2 km/h speed",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 15,
+      "id": 64,
       "date": "2026-05-04",
       "day": "Mon",
       "type": "Cardio",
@@ -665,10 +665,10 @@
       "sets_reps": null,
       "notes": "Monday May 4 third indoor bike; screen shows 50:04, 362 calories, level 11, distance 10.7, watts/HR ~76",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 14,
+      "id": 63,
       "date": "2026-05-04",
       "day": "Mon",
       "type": "Cardio",
@@ -683,10 +683,10 @@
       "sets_reps": null,
       "notes": "Monday May 4 second indoor bike; user reported 30 minutes and about 250 calories; no photo",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 13,
+      "id": 62,
       "date": "2026-05-04",
       "day": "Mon",
       "type": "Cardio",
@@ -701,10 +701,10 @@
       "sets_reps": null,
       "notes": "Monday May 4 indoor bike; screen shows 61:44, 425 calories, level 11, distance 12.8, watts/HR ~78",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 12,
+      "id": 61,
       "date": "2026-05-03",
       "day": "Sun",
       "type": "Cardio",
@@ -719,10 +719,10 @@
       "sets_reps": null,
       "notes": "Sunday indoor bike after dinner; screen shows 23:00, 194 calories, level 12, distance 4.68, watts/HR ~67",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 11,
+      "id": 60,
       "date": "2026-05-03",
       "day": "Sun",
       "type": "Cardio",
@@ -737,10 +737,10 @@
       "sets_reps": null,
       "notes": "Sunday StairMaster/stair climber; screen shows 59:20, 404 calories, level 2, 121 floors, SPM 33",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:59"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 10,
+      "id": 59,
       "date": "2026-05-02",
       "day": "Sat",
       "type": "Strength",
@@ -755,10 +755,10 @@
       "sets_reps": null,
       "notes": "Estimated via MET formula: 3.5 MET \u00d7 3.5 \u00d7 89 kg \u00f7 200 \u00d7 15 min \u2248 82 kcal; isolation movement with rest, so estimate range ~65\u201390 kcal",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:32"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 9,
+      "id": 58,
       "date": "2026-05-02",
       "day": "Sat",
       "type": "Cardio",
@@ -773,10 +773,10 @@
       "sets_reps": null,
       "notes": "Uploaded screen; indoor bike run, time shown 61:02, watts shown ~70",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:32"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 8,
+      "id": 57,
       "date": "2026-05-01",
       "day": "Fri",
       "type": "Strength",
@@ -791,10 +791,10 @@
       "sets_reps": null,
       "notes": "15 minutes at 40 kg; estimated via MET formula as moderate resistance training \u2248 82 kcal",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:32"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 7,
+      "id": 56,
       "date": "2026-05-01",
       "day": "Fri",
       "type": "Cardio",
@@ -809,10 +809,10 @@
       "sets_reps": null,
       "notes": "Indoor cycle after StairMaster",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:32"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 6,
+      "id": 55,
       "date": "2026-05-01",
       "day": "Fri",
       "type": "Cardio",
@@ -827,10 +827,10 @@
       "sets_reps": null,
       "notes": "Friday 1-hour StairMaster screenshot",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:32"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 5,
+      "id": 54,
       "date": "2026-04-30",
       "day": "Thu",
       "type": "Cardio",
@@ -845,10 +845,10 @@
       "sets_reps": null,
       "notes": "Third bike session",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:32"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 4,
+      "id": 53,
       "date": "2026-04-30",
       "day": "Thu",
       "type": "Cardio",
@@ -863,10 +863,10 @@
       "sets_reps": null,
       "notes": "Back-to-back bike session",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:32"
+      "created_at": "2026-05-19 19:02:31"
     },
     {
-      "id": 3,
+      "id": 52,
       "date": "2026-04-30",
       "day": "Thu",
       "type": "Cardio",
@@ -881,7 +881,7 @@
       "sets_reps": null,
       "notes": "Uploaded screen; first long bike session",
       "photo_path": null,
-      "created_at": "2026-05-19 18:52:32"
+      "created_at": "2026-05-19 19:02:31"
     }
   ],
   "body_metrics": [],
