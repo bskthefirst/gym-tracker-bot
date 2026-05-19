@@ -508,6 +508,8 @@ async def weight_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 async def daily_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     today_rows = db.get_workouts_for_date(_today())
+    if not today_rows:
+        return
     avg7 = db.get_7day_avg()
     text = fmt_report(today_rows, avg7)
     await context.bot.send_message(chat_id=config.USER_ID, text=text, parse_mode="Markdown")
