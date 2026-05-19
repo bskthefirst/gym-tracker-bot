@@ -265,6 +265,7 @@ async def duration_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if "duration_min" not in context.user_data:
         await query.edit_message_text("No OCR duration to skip. Reply with duration in minutes:")
         return DURATION
+    await query.edit_message_text(f"Duration: {round(context.user_data['duration_min'])} min ✅")
     return await _ask_calories(update, context)
 
 
@@ -299,6 +300,7 @@ async def calories_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if "calories" not in context.user_data:
         await query.edit_message_text("No OCR calories to skip. Reply with calories:")
         return CALORIES
+    await query.edit_message_text(f"Calories: {context.user_data['calories']} kcal ✅")
     return await _ask_distance(update, context)
 
 
@@ -329,7 +331,7 @@ async def distance_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         try:
             context.user_data["distance"] = float(text)
         except ValueError:
-            await update.message.reply_text("Send a number for distance, /skip, /none, or /cancel:")
+            await update.message.reply_text("Send a number for distance, or /cancel:")
             return DISTANCE
 
     return await _ask_notes(update, context)
@@ -338,6 +340,7 @@ async def distance_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 async def distance_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
+    await query.edit_message_text("Distance skipped ✅")
     return await _ask_notes(update, context)
 
 
@@ -360,6 +363,7 @@ async def notes_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def notes_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
+    await query.edit_message_text("Notes skipped ✅")
     return await _ask_confirm(update, context)
 
 
@@ -395,43 +399,60 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         context.user_data.clear()
         return ConversationHandler.END
 
+    if context.user_data.get("_confirmed"):
+        await query.edit_message_text("Already saved.")
+        return ConversationHandler.END
+
     d = context.user_data
+    required = ["machine", "duration_min", "calories"]
+    missing = [k for k in required if k not in d]
+    if missing:
+        await query.edit_message_text(f"Missing: {', '.join(missing)}. Start over with /log")
+        context.user_data.clear()
+        return ConversationHandler.END
+
     machine = d["machine"]
     calories = d["calories"]
 
-    prs = db.get_machine_prs()
-    previous_best = prs.get(machine)
-
-    wid = db.add_workout(
-        date=_today(),
-        workout_type=d.get("workout_type", "Cardio"),
-        machine=machine,
-        duration_min=d["duration_min"],
-        calories=calories,
-        level=d.get("level"),
-        distance=d.get("distance"),
-        notes=d.get("notes"),
-        photo_path=d.get("photo_path"),
-    )
-
-    import subprocess
     try:
-        subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
-        subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
-        subprocess.run(["git", "commit", "-m", f"Auto-export workouts after log {wid}"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
-        subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        prs = db.get_machine_prs()
+        previous_best = prs.get(machine)
+
+        wid = db.add_workout(
+            date=_today(),
+            workout_type=d.get("workout_type", "Cardio"),
+            machine=machine,
+            duration_min=d["duration_min"],
+            calories=calories,
+            level=d.get("level"),
+            distance=d.get("distance"),
+            notes=d.get("notes"),
+            photo_path=d.get("photo_path"),
+        )
+
+        import subprocess
+        try:
+            subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+            subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+            subprocess.run(["git", "commit", "-m", f"Auto-export workouts after log {wid}"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
+            subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        except Exception as e:
+            logger.error("Auto-export/push failed: %s", e)
+
+        today_rows = db.get_workouts_for_date(_today())
+        avg7 = db.get_7day_avg()
+        await query.edit_message_text(fmt_report(today_rows, avg7), parse_mode="Markdown")
+
+        if previous_best is None or calories > previous_best:
+            msg = f"🎉 New PR on {machine}: {calories} kcal"
+            if previous_best:
+                msg += f" (previous best: {previous_best})"
+            await context.bot.send_message(chat_id=config.USER_ID, text=msg)
+
+        context.user_data["_confirmed"] = True
     except Exception as e:
-        logger.error("Auto-export/push failed: %s", e)
-
-    today_rows = db.get_workouts_for_date(_today())
-    avg7 = db.get_7day_avg()
-    await query.edit_message_text(fmt_report(today_rows, avg7), parse_mode="Markdown")
-
-    if previous_best is None or calories > previous_best:
-        msg = f"🎉 New PR on {machine}: {calories} kcal"
-        if previous_best:
-            msg += f" (previous best: {previous_best})"
-        await context.bot.send_message(chat_id=config.USER_ID, text=msg)
+        logger.error("Confirm handler error: %s", e)
+        await query.edit_message_text(f"❌ Error saving workout: {e}\nTry /log again.")
 
     context.user_data.clear()
     return ConversationHandler.END
