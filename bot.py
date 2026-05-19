@@ -93,7 +93,9 @@ def parse_ocr_text(text: str) -> dict:
     for pat in cal_patterns:
         m = re.search(pat, text)
         if m:
-            result["calories"] = int(m.group(1))
+            val = int(m.group(1))
+            if 50 <= val <= 5000:
+                result["calories"] = val
             break
 
     dur_patterns = [
@@ -105,11 +107,14 @@ def parse_ocr_text(text: str) -> dict:
         if m:
             groups = m.groups()
             if len(groups) == 3:
-                result["duration_min"] = int(groups[0]) * 60 + int(groups[1]) + int(groups[2]) / 60
+                val = int(groups[0]) * 60 + int(groups[1]) + int(groups[2]) / 60
             else:
-                result["duration_min"] = int(groups[0]) + int(groups[1]) / 60
+                val = int(groups[0]) + int(groups[1]) / 60
+            if 1 <= val <= 300:
+                result["duration_min"] = val
             break
 
+    # Distance: look for km or mi; reject if > 50 (likely lost decimal point)
     dist_patterns = [
         r"(\d+\.?\d*)\s*[Kk][Mm]",
         r"(\d+\.?\d*)\s*[Mm][Ii]",
@@ -118,7 +123,9 @@ def parse_ocr_text(text: str) -> dict:
     for pat in dist_patterns:
         m = re.search(pat, text)
         if m:
-            result["distance"] = float(m.group(1))
+            val = float(m.group(1))
+            if 0.1 <= val <= 50:
+                result["distance"] = val
             break
 
     return result
