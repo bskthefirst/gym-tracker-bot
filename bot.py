@@ -1,7 +1,6 @@
 import os
 import re
 import datetime
-from zoneinfo import ZoneInfo
 import logging
 from typing import Optional
 
@@ -18,8 +17,6 @@ from telegram.ext import (
 
 import config
 import db
-
-KST = ZoneInfo("Asia/Seoul")
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -55,7 +52,7 @@ def _authorized(update: Update) -> bool:
 
 
 def _today() -> str:
-    return datetime.datetime.now(KST).date().isoformat()
+    return datetime.date.today().isoformat()
 
 
 def fmt_report(today_rows, avg7) -> str:
@@ -541,7 +538,7 @@ def main() -> None:
     application.add_handler(conv)
 
     job_queue = application.job_queue
-    job_queue.run_daily(daily_report, time=datetime.time(hour=config.DAILY_REPORT_HOUR, minute=0, tzinfo=KST))
+    job_queue.run_daily(daily_report, time=datetime.time(hour=config.DAILY_REPORT_HOUR, minute=0))
 
     application.run_polling(drop_pending_updates=True)
 
