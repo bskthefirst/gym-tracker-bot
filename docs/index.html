@@ -153,6 +153,11 @@
             </div>
 
             <div class="card">
+                <h2>Streak</h2>
+                <div class="big-number" id="streak-display">0 <span class="unit">days</span></div>
+            </div>
+
+            <div class="card">
                 <h2>7-Day Average</h2>
                 <div class="grid-3">
                     <div><div class="big-number"><span id="avg-cal">0</span> <span class="unit">kcal/day</span></div></div>
@@ -279,6 +284,7 @@
             document.getElementById('today-min').textContent = totalMin.toFixed(1);
             document.getElementById('today-count').textContent = todayWorkouts.length;
             document.getElementById('goal-label').textContent = 'Goal: ' + DAILY_GOAL + ' kcal';
+            document.getElementById('streak-display').innerHTML = (data.streak || 0) + ' <span class="unit">days</span>';
 
             const fill = document.getElementById('progress-fill');
             fill.style.width = pct + '%';

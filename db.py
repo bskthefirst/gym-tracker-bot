@@ -187,3 +187,57 @@ def get_today_summary(date: Optional[str] = None) -> Dict[str, Any]:
         "total_min": round(row["total_min"], 1),
         "count": row["count"],
     }
+
+
+def get_streak() -> int:
+    with get_conn() as conn:
+        rows = conn.execute("SELECT DISTINCT date FROM workouts ORDER BY date DESC").fetchall()
+    if not rows:
+        return 0
+    date_set = {r["date"] for r in rows}
+    today = datetime.date.today()
+    today_str = today.isoformat()
+    yesterday_str = (today - datetime.timedelta(days=1)).isoformat()
+    if today_str not in date_set and yesterday_str not in date_set:
+        return 0
+    streak = 0
+    for i in range(365):
+        d = (today - datetime.timedelta(days=i)).isoformat()
+        if d in date_set:
+            streak += 1
+        else:
+            break
+    return streak
+
+
+def get_week_summary(date: Optional[str] = None) -> Dict[str, Any]:
+    if date is None:
+        date = _today()
+    d = datetime.date.fromisoformat(date)
+    week_start = _week_start(d)
+    week_end = (datetime.date.fromisoformat(week_start) + datetime.timedelta(days=6)).isoformat()
+    with get_conn() as conn:
+        row = conn.execute(
+            """
+            SELECT COALESCE(SUM(calories), 0) as total_cal,
+                   COALESCE(SUM(duration_min), 0) as total_min,
+                   COUNT(DISTINCT date) as days_with_workouts,
+                   COUNT(*) as workout_count
+            FROM workouts
+            WHERE date >= ? AND date <= ?
+            """,
+            (week_start, week_end),
+        ).fetchone()
+        setting = conn.execute(
+            "SELECT value FROM settings WHERE key = 'target_cardio_min_week'"
+        ).fetchone()
+    target_min = float(setting["value"]) if setting else 240.0
+    return {
+        "week_start": week_start,
+        "week_end": week_end,
+        "total_cal": round(row["total_cal"] or 0, 1),
+        "total_min": round(row["total_min"] or 0, 1),
+        "days_with_workouts": row["days_with_workouts"] or 0,
+        "workout_count": row["workout_count"] or 0,
+        "target_min": target_min,
+    }

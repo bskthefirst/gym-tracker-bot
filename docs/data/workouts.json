@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-05-19T19:45:40.549433Z",
+  "exported_at": "2026-05-19T19:58:09.549590Z",
   "workouts": [
     {
       "id": 101,
@@ -907,5 +907,6 @@
     "calorie_adjustment_factor": "1.0",
     "daily_goal_kcal": "1000",
     "target_cardio_min_week": "240"
-  }
+  },
+  "streak": 20
 }

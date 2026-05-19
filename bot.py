@@ -57,7 +57,11 @@ def _today() -> str:
 
 def fmt_report(today_rows, avg7) -> str:
     today = db.get_today_summary()
-    lines = ["📋 *Today Total*"]
+    streak = db.get_streak()
+    lines = []
+    if streak > 1:
+        lines.append(f"🔥 *{streak} day streak*")
+    lines.append("📋 *Today Total*")
     if not today_rows:
         lines.append("No workouts logged yet.")
     else:
@@ -498,6 +502,28 @@ async def daily_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_message(chat_id=config.USER_ID, text=text, parse_mode="Markdown")
 
 
+async def weekly_alert(context: ContextTypes.DEFAULT_TYPE) -> None:
+    summary = db.get_week_summary()
+    target_cal = config.DAILY_GOAL_KCAL * 7
+    target_min = summary["target_min"]
+    cal_gap = round(target_cal - summary["total_cal"], 1)
+    min_gap = round(target_min - summary["total_min"], 1)
+    lines = [f"📅 *Week of {summary['week_start']}*"]
+    lines.append(f"  • Calories: *{summary['total_cal']}* / {target_cal} kcal")
+    lines.append(f"  • Cardio time: *{summary['total_min']}* / {target_min} min")
+    lines.append(f"  • Workouts: *{summary['workout_count']}* on *{summary['days_with_workouts']}* days")
+    lines.append("")
+    if cal_gap > 0 and min_gap > 0:
+        lines.append(f"⚠️ Need *{cal_gap}* kcal and *{min_gap}* min to hit weekly targets.")
+    elif cal_gap > 0:
+        lines.append(f"⚠️ Need *{cal_gap}* kcal to hit weekly calorie target.")
+    elif min_gap > 0:
+        lines.append(f"⚠️ Need *{min_gap}* min to hit weekly cardio target.")
+    else:
+        lines.append("🎯 Weekly targets reached!")
+    await context.bot.send_message(chat_id=config.USER_ID, text="\n".join(lines), parse_mode="Markdown")
+
+
 def main() -> None:
     db.init_db()
     application = Application.builder().token(config.BOT_TOKEN).build()
@@ -539,6 +565,8 @@ def main() -> None:
 
     job_queue = application.job_queue
     job_queue.run_daily(daily_report, time=datetime.time(hour=config.DAILY_REPORT_HOUR, minute=0))
+    # Saturday 9:00 AM CDT (Mini local time)
+    job_queue.run_daily(weekly_alert, time=datetime.time(hour=9, minute=0), days=(5,))
 
     application.run_polling(drop_pending_updates=True)
 

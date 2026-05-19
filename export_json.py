@@ -1,7 +1,7 @@
 import json
 import os
 import sqlite3
-from datetime import datetime
+import datetime
 
 DB_PATH = os.getenv("GYM_DB_PATH", "/Users/billkim/gym-tracker/gym.db")
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data")
@@ -35,11 +35,26 @@ def export():
 
     conn.close()
 
+    # Compute streak
+    streak = 0
+    dates = {w["date"] for w in workouts}
+    today = datetime.date.today()
+    today_str = today.isoformat()
+    yesterday_str = (today - datetime.timedelta(days=1)).isoformat()
+    if today_str in dates or yesterday_str in dates:
+        for i in range(365):
+            d = (today - datetime.timedelta(days=i)).isoformat()
+            if d in dates:
+                streak += 1
+            else:
+                break
+
     payload = {
-        "exported_at": datetime.utcnow().isoformat() + "Z",
+        "exported_at": datetime.datetime.utcnow().isoformat() + "Z",
         "workouts": workouts,
         "body_metrics": body_metrics,
         "settings": settings,
+        "streak": streak,
     }
 
     with open(OUT_FILE, "w") as f:
