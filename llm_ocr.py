@@ -16,8 +16,9 @@ def llm_ocr(image_path: str) -> Optional[dict]:
     """Optional LLM-based OCR. Falls back to None if no API key configured."""
     openai_key = os.getenv("OPENAI_API_KEY")
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
+    kimi_key = os.getenv("KIMI_API_KEY")
 
-    if not openai_key and not openrouter_key:
+    if not openai_key and not openrouter_key and not kimi_key:
         return None
 
     base64_image = _encode_image(image_path)
@@ -44,7 +45,24 @@ def llm_ocr(image_path: str) -> Optional[dict]:
     ]
 
     try:
-        if openrouter_key:
+        if kimi_key:
+            import requests
+            resp = requests.post(
+                "https://api.moonshot.cn/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {kimi_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": os.getenv("LLM_OCR_MODEL", "kimi-k2-6"),
+                    "messages": messages,
+                    "max_tokens": 300,
+                },
+                timeout=30,
+            )
+            resp.raise_for_status()
+            content = resp.json()["choices"][0]["message"]["content"]
+        elif openrouter_key:
             import requests
             resp = requests.post(
                 "https://openrouter.ai/api/v1/chat/completions",
