@@ -27,7 +27,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Conversation states
-PHOTO, TYPE, MACHINE, DURATION, CALORIES, LEVEL, DISTANCE, NOTES, CONFIRM = range(9)
+PHOTO, TYPE, DURATION, CALORIES, DISTANCE, NOTES, CONFIRM = range(7)
 
 MACHINE_OPTIONS = [
     ["Treadmill", "Incline treadmill"],
@@ -45,6 +45,8 @@ TYPE_MAP = {
     "Elliptical": "Cardio",
     "Strength / Other": "Strength",
 }
+
+SKIP_KEYBOARD = InlineKeyboardMarkup([[InlineKeyboardButton("⏭️ Skip", callback_data="skip")]])
 
 
 def _authorized(update: Update) -> bool:
@@ -80,12 +82,10 @@ def fmt_report(today_rows, avg7) -> str:
 
 
 def parse_ocr_text(text: str) -> dict:
-    """Best-effort parse of gym machine screen text."""
     result: dict = {"duration_min": None, "calories": None, "distance": None}
     if not text:
         return result
 
-    # Calories: look for number near CAL, KCAL, etc.
     cal_patterns = [
         r"(\d{3,4})\s*[Kk]?[Cc][Aa][Ll]",
         r"[Cc][Aa][Ll][Oo][Rr][Ii][Ee][Ss]?\s*(\d{3,4})",
@@ -97,7 +97,6 @@ def parse_ocr_text(text: str) -> dict:
             result["calories"] = int(m.group(1))
             break
 
-    # Duration: look for mm:ss or hh:mm:ss
     dur_patterns = [
         r"(\d{1,2}):(\d{2}):(\d{2})",
         r"(\d{1,2}):(\d{2})",
@@ -112,7 +111,6 @@ def parse_ocr_text(text: str) -> dict:
                 result["duration_min"] = int(groups[0]) + int(groups[1]) / 60
             break
 
-    # Distance: look for km or mi
     dist_patterns = [
         r"(\d+\.?\d*)\s*[Kk][Mm]",
         r"(\d+\.?\d*)\s*[Mm][Ii]",
@@ -185,7 +183,6 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await file.download_to_drive(path)
     context.user_data["photo_path"] = path
 
-    # Try LLM OCR first, then Tesseract fallback
     ocr_result = {}
     try:
         from llm_ocr import llm_ocr
@@ -199,7 +196,6 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             from PIL import Image
             pytesseract.pytesseract.tesseract_cmd = "/opt/homebrew/bin/tesseract"
             text = pytesseract.image_to_string(Image.open(path))
-            # Tesseract often fails on gym LCD screens; reject garbage output
             if len(text.strip()) < 10 or not re.search(r"\d", text):
                 logger.info("Tesseract OCR returned no usable text: %r", text)
             else:
@@ -210,7 +206,6 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     context.user_data["ocr"] = ocr_result
 
-    # Build pre-fill message
     pre = []
     if ocr_result.get("duration_min"):
         pre.append(f"Duration: {ocr_result['duration_min']:.1f} min")
@@ -244,8 +239,9 @@ async def type_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if ocr.get("duration_min"):
         context.user_data["duration_min"] = ocr["duration_min"]
         await query.edit_message_text(
-            f"Machine: {machine}\nOCR duration: {ocr['duration_min']:.1f} min\n\nReply with duration in minutes, or send /skip to keep."
+            f"Machine: {machine}\nOCR duration: {ocr['duration_min']:.1f} min\n\nReply with duration in minutes, or tap Skip to keep."
         )
+        await query.message.reply_text("Duration:", reply_markup=SKIP_KEYBOARD)
     else:
         await query.edit_message_text(f"Machine: {machine}\n\nReply with duration in minutes:")
     return DURATION
@@ -255,26 +251,32 @@ async def duration_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     text = update.message.text.strip()
     if text == "/cancel":
         return await cancel(update, context)
-    if text.startswith("/") and text != "/skip":
-        await update.message.reply_text("Send a number, /skip to keep OCR value, or /cancel:")
+    try:
+        context.user_data["duration_min"] = float(text)
+    except ValueError:
+        await update.message.reply_text("Send a number for duration (minutes), or /cancel:")
         return DURATION
-    if text == "/skip" and "duration_min" in context.user_data:
-        pass
-    else:
-        try:
-            context.user_data["duration_min"] = float(text)
-        except ValueError:
-            await update.message.reply_text("Send a number for duration (minutes), /skip, or /cancel:")
-            return DURATION
 
+    return await _ask_calories(update, context)
+
+
+async def duration_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    if "duration_min" not in context.user_data:
+        await query.edit_message_text("No OCR duration to skip. Reply with duration in minutes:")
+        return DURATION
+    return await _ask_calories(update, context)
+
+
+async def _ask_calories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     ocr = context.user_data.get("ocr", {})
     if ocr.get("calories"):
         context.user_data["calories"] = ocr["calories"]
-        await update.message.reply_text(
-            f"Duration: {context.user_data['duration_min']} min\nOCR calories: {ocr['calories']}\n\nReply with calories, or send /skip to keep."
-        )
+        msg = f"Duration: {context.user_data['duration_min']} min\nOCR calories: {ocr['calories']}\n\nReply with calories, or tap Skip to keep."
     else:
-        await update.message.reply_text("Reply with calories shown on machine:")
+        msg = "Reply with calories shown on machine:"
+    await update.message.reply_text(msg, reply_markup=SKIP_KEYBOARD)
     return CALORIES
 
 
@@ -282,28 +284,32 @@ async def calories_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     text = update.message.text.strip()
     if text == "/cancel":
         return await cancel(update, context)
-    if text.startswith("/") and text != "/skip":
-        await update.message.reply_text("Send a number, /skip to keep OCR value, or /cancel:")
+    try:
+        context.user_data["calories"] = float(text)
+    except ValueError:
+        await update.message.reply_text("Send a number for calories, or /cancel:")
         return CALORIES
-    if text == "/skip" and "calories" in context.user_data:
-        pass
-    else:
-        try:
-            context.user_data["calories"] = float(text)
-        except ValueError:
-            await update.message.reply_text("Send a number for calories, /skip, or /cancel:")
-            return CALORIES
 
+    return await _ask_distance(update, context)
+
+
+async def calories_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    if "calories" not in context.user_data:
+        await query.edit_message_text("No OCR calories to skip. Reply with calories:")
+        return CALORIES
+    return await _ask_distance(update, context)
+
+
+async def _ask_distance(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     ocr = context.user_data.get("ocr", {})
     if ocr.get("distance"):
         context.user_data["distance"] = ocr["distance"]
-        await update.message.reply_text(
-            f"Calories: {context.user_data['calories']}\nOCR distance: {ocr['distance']} km\n\nReply with distance (km), or send /skip to keep, or /none if not applicable."
-        )
+        msg = f"Calories: {context.user_data['calories']}\nOCR distance: {ocr['distance']} km\n\nReply with distance (km), or tap Skip to keep."
     else:
-        await update.message.reply_text(
-            "Reply with distance (km), or send /skip if not applicable:"
-        )
+        msg = "Reply with distance (km), or tap Skip if not applicable:"
+    await update.message.reply_text(msg, reply_markup=SKIP_KEYBOARD)
     return DISTANCE
 
 
@@ -311,47 +317,32 @@ async def distance_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     text = update.message.text.strip()
     if text == "/cancel":
         return await cancel(update, context)
-    if text.startswith("/") and text not in ("/skip", "/none"):
-        await update.message.reply_text("Send a number, /skip, /none, or /cancel:")
-        return DISTANCE
 
-    if text in ("/skip", "/none"):
-        pass
+    miles_match = re.search(r"([\d.]+)\s*(?:miles?|mi)", text, re.IGNORECASE)
+    if miles_match:
+        miles = float(miles_match.group(1))
+        km = round(miles * 1.60934, 2)
+        context.user_data["distance"] = km
+        await update.message.reply_text(f"Converted {miles} mi → {km} km")
     else:
-        # Convert miles to km
-        miles_match = re.search(r"([\d.]+)\s*(?:miles?|mi)", text, re.IGNORECASE)
-        if miles_match:
-            miles = float(miles_match.group(1))
-            km = round(miles * 1.60934, 2)
-            context.user_data["distance"] = km
-            await update.message.reply_text(
-                f"Converted {miles} mi → {km} km\n\nReply with level/resistance (e.g., 'Level 11', '18 incline'), or send /skip:"
-            )
-            return LEVEL
         try:
             context.user_data["distance"] = float(text)
         except ValueError:
             await update.message.reply_text("Send a number for distance, /skip, /none, or /cancel:")
             return DISTANCE
 
+    return await _ask_notes(update, context)
+
+
+async def distance_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    return await _ask_notes(update, context)
+
+
+async def _ask_notes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        "Reply with level/resistance (e.g., 'Level 11', '18 incline'), or send /skip:"
-    )
-    return LEVEL
-
-
-async def level_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    text = update.message.text.strip()
-    if text == "/cancel":
-        return await cancel(update, context)
-    if text.startswith("/") and text != "/skip":
-        await update.message.reply_text("Send level text, /skip, or /cancel:")
-        return LEVEL
-    if text != "/skip":
-        context.user_data["level"] = text
-
-    await update.message.reply_text(
-        "Any notes? Reply with text, or send /skip:"
+        "Any notes? Reply with text, or tap Skip:", reply_markup=SKIP_KEYBOARD
     )
     return NOTES
 
@@ -360,12 +351,17 @@ async def notes_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     text = update.message.text.strip()
     if text == "/cancel":
         return await cancel(update, context)
-    if text.startswith("/") and text != "/skip":
-        await update.message.reply_text("Send note text, /skip, or /cancel:")
-        return NOTES
-    if text != "/skip":
-        context.user_data["notes"] = text
+    context.user_data["notes"] = text
+    return await _ask_confirm(update, context)
 
+
+async def notes_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    return await _ask_confirm(update, context)
+
+
+async def _ask_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     d = context.user_data
     summary = (
         f"Confirm log:\n"
@@ -375,8 +371,6 @@ async def notes_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     )
     if "distance" in d:
         summary += f"\n  • {d['distance']} km"
-    if "level" in d:
-        summary += f"\n  • {d['level']}"
     if "notes" in d:
         summary += f"\n  • Note: {d['notes']}"
 
@@ -411,7 +405,6 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         photo_path=d.get("photo_path"),
     )
 
-    # Auto-export JSON and push to GitHub Pages
     import subprocess
     try:
         subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
@@ -444,12 +437,10 @@ async def export_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     wb = openpyxl.load_workbook(xlsx_path)
     ws = wb["Workout Log"]
 
-    # Find first empty row
     row = 2
     while ws.cell(row=row, column=1).value is not None:
         row += 1
 
-    # Get workouts not yet in xlsx (heuristic: last N)
     workouts = db.get_recent_workouts(30)
     existing_dates_machines = set()
     for r in range(2, row):
@@ -521,11 +512,22 @@ def main() -> None:
         ],
         states={
             TYPE: [CallbackQueryHandler(type_selected)],
-            DURATION: [MessageHandler(filters.TEXT, duration_received)],
-            CALORIES: [MessageHandler(filters.TEXT, calories_received)],
-            DISTANCE: [MessageHandler(filters.TEXT, distance_received)],
-            LEVEL: [MessageHandler(filters.TEXT, level_received)],
-            NOTES: [MessageHandler(filters.TEXT, notes_received)],
+            DURATION: [
+                MessageHandler(filters.TEXT, duration_received),
+                CallbackQueryHandler(duration_skip, pattern="^skip$"),
+            ],
+            CALORIES: [
+                MessageHandler(filters.TEXT, calories_received),
+                CallbackQueryHandler(calories_skip, pattern="^skip$"),
+            ],
+            DISTANCE: [
+                MessageHandler(filters.TEXT, distance_received),
+                CallbackQueryHandler(distance_skip, pattern="^skip$"),
+            ],
+            NOTES: [
+                MessageHandler(filters.TEXT, notes_received),
+                CallbackQueryHandler(notes_skip, pattern="^skip$"),
+            ],
             CONFIRM: [CallbackQueryHandler(confirm_handler)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
