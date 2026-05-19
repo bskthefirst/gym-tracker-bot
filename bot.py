@@ -29,7 +29,7 @@ PHOTO, TYPE, DURATION, CALORIES, DISTANCE, NOTES, CONFIRM = range(7)
 MACHINE_OPTIONS = [
     ["Stair Master", "Incline Treadmill"],
     ["Indoor Cycling", "Bicep-Tricep Curl"],
-    ["Leg Curl", "Strength- Others"],
+    ["Leg", "Strength- Others"],
 ]
 
 TYPE_MAP = {
@@ -37,7 +37,7 @@ TYPE_MAP = {
     "Incline Treadmill": "Cardio",
     "Indoor Cycling": "Cardio",
     "Bicep-Tricep Curl": "Strength",
-    "Leg Curl": "Strength",
+    "Leg": "Strength",
     "Strength- Others": "Strength",
 }
 
