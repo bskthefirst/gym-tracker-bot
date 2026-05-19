@@ -158,16 +158,6 @@
             </div>
 
             <div class="card">
-                <h2>Personal Records</h2>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead><tr><th>Machine</th><th>Best Kcal</th></tr></thead>
-                        <tbody id="pr-table"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card">
                 <h2>7-Day Average</h2>
                 <div class="grid-3">
                     <div><div class="big-number"><span id="avg-cal">0</span> <span class="unit">kcal/day</span></div></div>
@@ -213,6 +203,18 @@
         </div>
 
         <div class="refresh-note">Auto-refreshes every 60s · <a href="/" style="color:#58a6ff">Reload now</a></div>
+
+        <div class="card" style="margin-top: 20px;">
+            <button class="tab" onclick="togglePR()" id="pr-toggle" style="width:100%; text-align:left; border-bottom:none; margin-bottom:0;">▶ Personal Records</button>
+            <div id="pr-wrap" style="display:none; margin-top:12px;">
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead><tr><th>Machine</th><th>Best Kcal</th></tr></thead>
+                        <tbody id="pr-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -221,6 +223,18 @@
         const DAILY_GOAL = 1000;
         let dbSortKey = 'date';
         let dbSortAsc = false;
+
+        function togglePR() {
+            const wrap = document.getElementById('pr-wrap');
+            const btn = document.getElementById('pr-toggle');
+            if (wrap.style.display === 'none') {
+                wrap.style.display = 'block';
+                btn.textContent = '\u25bc Personal Records';
+            } else {
+                wrap.style.display = 'none';
+                btn.textContent = '\u25b6 Personal Records';
+            }
+        }
 
         function switchTab(name, el) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
