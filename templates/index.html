@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gym Tracker Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.5;
+            padding-bottom: 40px;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { font-size: 1.5rem; margin-bottom: 4px; color: #f0f6fc; }
+        .subtitle { color: #8b949e; font-size: 0.85rem; margin-bottom: 20px; }
+
+        /* Cards */
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .card h2 { font-size: 0.8rem; text-transform: uppercase; color: #8b949e; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .big-number { font-size: 2rem; font-weight: 700; color: #f0f6fc; }
+        .unit { font-size: 0.9rem; color: #8b949e; font-weight: 400; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        @media (max-width: 500px) { .grid-3 { grid-template-columns: 1fr; } }
+
+        /* Progress bar */
+        .progress-wrap { margin-top: 10px; }
+        .progress-bar-bg {
+            background: #21262d;
+            border-radius: 8px;
+            height: 28px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #238636, #2ea043);
+            border-radius: 8px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+            min-width: 40px;
+        }
+        .progress-bar-fill.warning { background: linear-gradient(90deg, #d29922, #daaa3f); }
+        .progress-bar-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
+        .progress-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.75rem; color: #8b949e; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #21262d; }
+        th { color: #8b949e; font-weight: 500; font-size: 0.75rem; text-transform: uppercase; }
+        td { color: #c9d1d9; }
+        tr:hover td { background: #161b22; }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .badge-cardio { background: #1f4d2e; color: #3fb950; }
+        .badge-strength { background: #3d1f4d; color: #d2a8ff; }
+
+        /* Chart */
+        .chart-wrap { position: relative; height: 220px; margin-top: 10px; }
+
+        .refresh-note {
+            text-align: center;
+            color: #484f58;
+            font-size: 0.75rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💪 Gym Tracker</h1>
+        <div class="subtitle" id="date-label">Loading...</div>
+
+        <!-- Today's Progress -->
+        <div class="card">
+            <h2>Today's Progress</h2>
+            <div class="grid-3">
+                <div>
+                    <div class="big-number"><span id="today-cal">0</span> <span class="unit">kcal</span></div>
+                </div>
+                <div>
+                    <div class="big-number"><span id="today-min">0</span> <span class="unit">min</span></div>
+                </div>
+                <div>
+                    <div class="big-number"><span id="today-count">0</span> <span class="unit">workouts</span></div>
+                </div>
+            </div>
+            <div class="progress-wrap">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-fill" style="width: 0%">0%</div>
+                </div>
+                <div class="progress-labels">
+                    <span>0</span>
+                    <span id="goal-label">Goal: 1000 kcal</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7-Day Summary -->
+        <div class="card">
+            <h2>7-Day Average</h2>
+            <div class="grid-3">
+                <div>
+                    <div class="big-number"><span id="avg-cal">0</span> <span class="unit">kcal/day</span></div>
+                </div>
+                <div>
+                    <div class="big-number"><span id="avg-min">0</span> <span class="unit">min/day</span></div>
+                </div>
+                <div>
+                    <div class="big-number"><span id="days-logged">0</span> <span class="unit">days</span></div>
+                </div>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="weekChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Workouts -->
+        <div class="card">
+            <h2>Recent Workouts</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Machine</th>
+                            <th>Type</th>
+                            <th>Min</th>
+                            <th>Kcal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="workout-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="refresh-note">Auto-refreshes every 30s · <a href="/" style="color:#58a6ff">Reload now</a></div>
+    </div>
+
+    <script>
+        let weekChartInstance = null;
+
+        async function load() {
+            const [today, week, recent] = await Promise.all([
+                fetch('/api/today').then(r => r.json()),
+                fetch('/api/week').then(r => r.json()),
+                fetch('/api/recent').then(r => r.json()),
+            ]);
+
+            // Today
+            document.getElementById('date-label').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+            document.getElementById('today-cal').textContent = today.total_cal;
+            document.getElementById('today-min').textContent = today.total_min;
+            document.getElementById('today-count').textContent = today.workouts.length;
+            document.getElementById('goal-label').textContent = 'Goal: ' + today.goal + ' kcal';
+
+            const fill = document.getElementById('progress-fill');
+            fill.style.width = today.pct + '%';
+            fill.textContent = today.pct + '%';
+            fill.className = 'progress-bar-fill';
+            if (today.pct < 50) fill.classList.add('danger');
+            else if (today.pct < 80) fill.classList.add('warning');
+
+            // 7-day
+            document.getElementById('avg-cal').textContent = week.avg_cal;
+            document.getElementById('avg-min').textContent = week.avg_min;
+            document.getElementById('days-logged').textContent = week.days_logged;
+
+            // Chart
+            const labels = week.days.map(d => d.date.slice(5));
+            const dataCal = week.days.map(d => d.cal || 0);
+            const ctx = document.getElementById('weekChart').getContext('2d');
+            if (weekChartInstance) weekChartInstance.destroy();
+            weekChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Calories',
+                        data: dataCal,
+                        backgroundColor: '#238636',
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#21262d' },
+                            ticks: { color: '#8b949e', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#8b949e', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // Table
+            const tbody = document.getElementById('workout-table');
+            tbody.innerHTML = recent.workouts.slice(0, 15).map(w => {
+                const typeClass = w.type === 'Strength' ? 'badge-strength' : 'badge-cardio';
+                return `<tr>
+                    <td>${w.date}</td>
+                    <td>${w.machine}</td>
+                    <td><span class="badge ${typeClass}">${w.type}</span></td>
+                    <td>${w.duration_min}</td>
+                    <td><strong>${w.calories}</strong></td>
+                </tr>`;
+            }).join('');
+        }
+
+        load();
+        setInterval(load, 30000);
+    </script>
+</body>
+</html>
