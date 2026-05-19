@@ -199,8 +199,12 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             from PIL import Image
             pytesseract.pytesseract.tesseract_cmd = "/opt/homebrew/bin/tesseract"
             text = pytesseract.image_to_string(Image.open(path))
-            ocr_result = parse_ocr_text(text)
-            logger.info("Tesseract OCR text: %s | parsed: %s", text, ocr_result)
+            # Tesseract often fails on gym LCD screens; reject garbage output
+            if len(text.strip()) < 10 or not re.search(r"\d", text):
+                logger.info("Tesseract OCR returned no usable text: %r", text)
+            else:
+                ocr_result = parse_ocr_text(text)
+                logger.info("Tesseract OCR text: %s | parsed: %s", text, ocr_result)
         except Exception as e:
             logger.info("Tesseract OCR skipped: %s", e)
 
@@ -219,7 +223,7 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if pre:
         msg += " I read:\n" + "\n".join(pre) + "\n\nSelect machine:"
     else:
-        msg += " Select machine:"
+        msg += " (Couldn't read numbers from photo — you'll enter them manually.)\n\nSelect machine:"
 
     keyboard = [
         [InlineKeyboardButton(m, callback_data=m) for m in row]
@@ -249,13 +253,18 @@ async def type_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 async def duration_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
+    if text == "/cancel":
+        return await cancel(update, context)
+    if text.startswith("/") and text != "/skip":
+        await update.message.reply_text("Send a number, /skip to keep OCR value, or /cancel:")
+        return DURATION
     if text == "/skip" and "duration_min" in context.user_data:
         pass
     else:
         try:
             context.user_data["duration_min"] = float(text)
         except ValueError:
-            await update.message.reply_text("Send a number for duration (minutes):")
+            await update.message.reply_text("Send a number for duration (minutes), /skip, or /cancel:")
             return DURATION
 
     ocr = context.user_data.get("ocr", {})
@@ -271,13 +280,18 @@ async def duration_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def calories_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
+    if text == "/cancel":
+        return await cancel(update, context)
+    if text.startswith("/") and text != "/skip":
+        await update.message.reply_text("Send a number, /skip to keep OCR value, or /cancel:")
+        return CALORIES
     if text == "/skip" and "calories" in context.user_data:
         pass
     else:
         try:
             context.user_data["calories"] = float(text)
         except ValueError:
-            await update.message.reply_text("Send a number for calories:")
+            await update.message.reply_text("Send a number for calories, /skip, or /cancel:")
             return CALORIES
 
     ocr = context.user_data.get("ocr", {})
@@ -295,13 +309,29 @@ async def calories_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def distance_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
+    if text == "/cancel":
+        return await cancel(update, context)
+    if text.startswith("/") and text not in ("/skip", "/none"):
+        await update.message.reply_text("Send a number, /skip, /none, or /cancel:")
+        return DISTANCE
+
     if text in ("/skip", "/none"):
         pass
     else:
+        # Convert miles to km
+        miles_match = re.search(r"([\d.]+)\s*(?:miles?|mi)", text, re.IGNORECASE)
+        if miles_match:
+            miles = float(miles_match.group(1))
+            km = round(miles * 1.60934, 2)
+            context.user_data["distance"] = km
+            await update.message.reply_text(
+                f"Converted {miles} mi → {km} km\n\nReply with level/resistance (e.g., 'Level 11', '18 incline'), or send /skip:"
+            )
+            return LEVEL
         try:
             context.user_data["distance"] = float(text)
         except ValueError:
-            await update.message.reply_text("Send a number for distance, or /skip:")
+            await update.message.reply_text("Send a number for distance, /skip, /none, or /cancel:")
             return DISTANCE
 
     await update.message.reply_text(
@@ -312,6 +342,11 @@ async def distance_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def level_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
+    if text == "/cancel":
+        return await cancel(update, context)
+    if text.startswith("/") and text != "/skip":
+        await update.message.reply_text("Send level text, /skip, or /cancel:")
+        return LEVEL
     if text != "/skip":
         context.user_data["level"] = text
 
@@ -323,6 +358,11 @@ async def level_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def notes_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
+    if text == "/cancel":
+        return await cancel(update, context)
+    if text.startswith("/") and text != "/skip":
+        await update.message.reply_text("Send note text, /skip, or /cancel:")
+        return NOTES
     if text != "/skip":
         context.user_data["notes"] = text
 
@@ -481,11 +521,11 @@ def main() -> None:
         ],
         states={
             TYPE: [CallbackQueryHandler(type_selected)],
-            DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, duration_received)],
-            CALORIES: [MessageHandler(filters.TEXT & ~filters.COMMAND, calories_received)],
-            DISTANCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, distance_received)],
-            LEVEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, level_received)],
-            NOTES: [MessageHandler(filters.TEXT & ~filters.COMMAND, notes_received)],
+            DURATION: [MessageHandler(filters.TEXT, duration_received)],
+            CALORIES: [MessageHandler(filters.TEXT, calories_received)],
+            DISTANCE: [MessageHandler(filters.TEXT, distance_received)],
+            LEVEL: [MessageHandler(filters.TEXT, level_received)],
+            NOTES: [MessageHandler(filters.TEXT, notes_received)],
             CONFIRM: [CallbackQueryHandler(confirm_handler)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
