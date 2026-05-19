@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-05-19T19:58:09.549590Z",
+  "exported_at": "2026-05-19T20:04:48.338259Z",
   "workouts": [
     {
       "id": 101,
@@ -908,5 +908,15 @@
     "daily_goal_kcal": "1000",
     "target_cardio_min_week": "240"
   },
-  "streak": 20
+  "streak": 20,
+  "prs": {
+    "Indoor bike": 483.0,
+    "Treadmill": 310.0,
+    "StairMaster": 560.0,
+    "Incline treadmill": 590.0,
+    "Leg press machine": 27.0,
+    "MTS row machine": 54.0,
+    "Triceps curls": 82.0,
+    "Row machine": 82.0
+  }
 }

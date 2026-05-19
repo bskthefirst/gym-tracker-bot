@@ -49,12 +49,21 @@ def export():
             else:
                 break
 
+    # Compute PRs
+    prs = {}
+    for w in workouts:
+        m = w["machine"]
+        c = w["calories"] or 0
+        if m not in prs or c > prs[m]:
+            prs[m] = c
+
     payload = {
         "exported_at": datetime.datetime.utcnow().isoformat() + "Z",
         "workouts": workouts,
         "body_metrics": body_metrics,
         "settings": settings,
         "streak": streak,
+        "prs": prs,
     }
 
     with open(OUT_FILE, "w") as f:

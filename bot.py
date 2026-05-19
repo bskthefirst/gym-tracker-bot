@@ -27,20 +27,18 @@ logger = logging.getLogger(__name__)
 PHOTO, TYPE, DURATION, CALORIES, DISTANCE, NOTES, CONFIRM = range(7)
 
 MACHINE_OPTIONS = [
-    ["Treadmill", "Incline treadmill"],
-    ["StairMaster", "Indoor bike"],
-    ["Row machine", "Elliptical"],
-    ["Strength / Other"],
+    ["Stair Master", "Incline Treadmill"],
+    ["Indoor Cycling", "Bicep-Tricep Curl"],
+    ["Leg Curl", "Strength- Others"],
 ]
 
 TYPE_MAP = {
-    "Treadmill": "Cardio",
-    "Incline treadmill": "Cardio",
-    "StairMaster": "Cardio",
-    "Indoor bike": "Cardio",
-    "Row machine": "Strength",
-    "Elliptical": "Cardio",
-    "Strength / Other": "Strength",
+    "Stair Master": "Cardio",
+    "Incline Treadmill": "Cardio",
+    "Indoor Cycling": "Cardio",
+    "Bicep-Tricep Curl": "Strength",
+    "Leg Curl": "Strength",
+    "Strength- Others": "Strength",
 }
 
 SKIP_KEYBOARD = InlineKeyboardMarkup([[InlineKeyboardButton("⏭️ Skip", callback_data="skip")]])
@@ -394,12 +392,18 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return ConversationHandler.END
 
     d = context.user_data
+    machine = d["machine"]
+    calories = d["calories"]
+
+    prs = db.get_machine_prs()
+    previous_best = prs.get(machine)
+
     wid = db.add_workout(
         date=_today(),
         workout_type=d.get("workout_type", "Cardio"),
-        machine=d["machine"],
+        machine=machine,
         duration_min=d["duration_min"],
-        calories=d["calories"],
+        calories=calories,
         level=d.get("level"),
         distance=d.get("distance"),
         notes=d.get("notes"),
@@ -418,6 +422,13 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     today_rows = db.get_workouts_for_date(_today())
     avg7 = db.get_7day_avg()
     await query.edit_message_text(fmt_report(today_rows, avg7), parse_mode="Markdown")
+
+    if previous_best is None or calories > previous_best:
+        msg = f"🎉 New PR on {machine}: {calories} kcal"
+        if previous_best:
+            msg += f" (previous best: {previous_best})"
+        await context.bot.send_message(chat_id=config.USER_ID, text=msg)
+
     context.user_data.clear()
     return ConversationHandler.END
 

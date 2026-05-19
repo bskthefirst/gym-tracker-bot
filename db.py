@@ -168,6 +168,18 @@ def get_7day_avg(date: Optional[str] = None) -> Dict[str, Any]:
     }
 
 
+def get_machine_prs() -> Dict[str, float]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT machine, MAX(calories) as best
+            FROM workouts
+            GROUP BY machine
+            """
+        ).fetchall()
+    return {r["machine"]: r["best"] for r in rows}
+
+
 def get_today_summary(date: Optional[str] = None) -> Dict[str, Any]:
     if date is None:
         date = _today()
