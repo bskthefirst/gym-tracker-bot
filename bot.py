@@ -367,6 +367,16 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         photo_path=d.get("photo_path"),
     )
 
+    # Auto-export JSON and push to GitHub Pages
+    import subprocess
+    try:
+        subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", f"Auto-export workouts after log {wid}"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+    except Exception as e:
+        logger.error("Auto-export/push failed: %s", e)
+
     today_rows = db.get_workouts_for_date(_today())
     avg7 = db.get_7day_avg()
     await query.edit_message_text(fmt_report(today_rows, avg7), parse_mode="Markdown")

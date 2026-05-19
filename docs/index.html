@@ -18,7 +18,6 @@
         h1 { font-size: 1.5rem; margin-bottom: 4px; color: #f0f6fc; }
         .subtitle { color: #8b949e; font-size: 0.85rem; margin-bottom: 20px; }
 
-        /* Cards */
         .card {
             background: #161b22;
             border: 1px solid #30363d;
@@ -32,7 +31,6 @@
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         @media (max-width: 500px) { .grid-3 { grid-template-columns: 1fr; } }
 
-        /* Progress bar */
         .progress-wrap { margin-top: 10px; }
         .progress-bar-bg {
             background: #21262d;
@@ -59,7 +57,6 @@
         .progress-bar-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
         .progress-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.75rem; color: #8b949e; }
 
-        /* Table */
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #21262d; }
         th { color: #8b949e; font-weight: 500; font-size: 0.75rem; text-transform: uppercase; }
@@ -75,7 +72,6 @@
         .badge-cardio { background: #1f4d2e; color: #3fb950; }
         .badge-strength { background: #3d1f4d; color: #d2a8ff; }
 
-        /* Chart */
         .chart-wrap { position: relative; height: 220px; margin-top: 10px; }
 
         .refresh-note {
@@ -91,19 +87,12 @@
         <h1>💪 Gym Tracker</h1>
         <div class="subtitle" id="date-label">Loading...</div>
 
-        <!-- Today's Progress -->
         <div class="card">
             <h2>Today's Progress</h2>
             <div class="grid-3">
-                <div>
-                    <div class="big-number"><span id="today-cal">0</span> <span class="unit">kcal</span></div>
-                </div>
-                <div>
-                    <div class="big-number"><span id="today-min">0</span> <span class="unit">min</span></div>
-                </div>
-                <div>
-                    <div class="big-number"><span id="today-count">0</span> <span class="unit">workouts</span></div>
-                </div>
+                <div><div class="big-number"><span id="today-cal">0</span> <span class="unit">kcal</span></div></div>
+                <div><div class="big-number"><span id="today-min">0</span> <span class="unit">min</span></div></div>
+                <div><div class="big-number"><span id="today-count">0</span> <span class="unit">workouts</span></div></div>
             </div>
             <div class="progress-wrap">
                 <div class="progress-bar-bg">
@@ -116,79 +105,81 @@
             </div>
         </div>
 
-        <!-- 7-Day Summary -->
         <div class="card">
             <h2>7-Day Average</h2>
             <div class="grid-3">
-                <div>
-                    <div class="big-number"><span id="avg-cal">0</span> <span class="unit">kcal/day</span></div>
-                </div>
-                <div>
-                    <div class="big-number"><span id="avg-min">0</span> <span class="unit">min/day</span></div>
-                </div>
-                <div>
-                    <div class="big-number"><span id="days-logged">0</span> <span class="unit">days</span></div>
-                </div>
+                <div><div class="big-number"><span id="avg-cal">0</span> <span class="unit">kcal/day</span></div></div>
+                <div><div class="big-number"><span id="avg-min">0</span> <span class="unit">min/day</span></div></div>
+                <div><div class="big-number"><span id="days-logged">0</span> <span class="unit">days</span></div></div>
             </div>
-            <div class="chart-wrap">
-                <canvas id="weekChart"></canvas>
-            </div>
+            <div class="chart-wrap"><canvas id="weekChart"></canvas></div>
         </div>
 
-        <!-- Recent Workouts -->
         <div class="card">
             <h2>Recent Workouts</h2>
             <div style="overflow-x: auto;">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Machine</th>
-                            <th>Type</th>
-                            <th>Min</th>
-                            <th>Kcal</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Date</th><th>Machine</th><th>Type</th><th>Min</th><th>Kcal</th></tr></thead>
                     <tbody id="workout-table"></tbody>
                 </table>
             </div>
         </div>
 
-        <div class="refresh-note">Auto-refreshes every 30s · <a href="/" style="color:#58a6ff">Reload now</a></div>
+        <div class="refresh-note">Static snapshot · Updated from Mac Mini</div>
     </div>
 
     <script>
         let weekChartInstance = null;
+        const DAILY_GOAL = 1000;
 
         async function load() {
-            const [today, week, recent] = await Promise.all([
-                fetch('/api/today').then(r => r.json()),
-                fetch('/api/week').then(r => r.json()),
-                fetch('/api/recent').then(r => r.json()),
-            ]);
+            const res = await fetch('data/workouts.json?t=' + Date.now());
+            const data = await res.json();
+            const workouts = data.workouts || [];
+            const todayStr = new Date().toISOString().slice(0, 10);
 
-            // Today
+            const todayWorkouts = workouts.filter(w => w.date === todayStr);
+            const totalCal = todayWorkouts.reduce((s, w) => s + (w.calories || 0), 0);
+            const totalMin = todayWorkouts.reduce((s, w) => s + (w.duration_min || 0), 0);
+            const pct = Math.min(100, Math.round((totalCal / DAILY_GOAL) * 100));
+
             document.getElementById('date-label').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-            document.getElementById('today-cal').textContent = today.total_cal;
-            document.getElementById('today-min').textContent = today.total_min;
-            document.getElementById('today-count').textContent = today.workouts.length;
-            document.getElementById('goal-label').textContent = 'Goal: ' + today.goal + ' kcal';
+            document.getElementById('today-cal').textContent = totalCal.toFixed(1);
+            document.getElementById('today-min').textContent = totalMin.toFixed(1);
+            document.getElementById('today-count').textContent = todayWorkouts.length;
+            document.getElementById('goal-label').textContent = 'Goal: ' + DAILY_GOAL + ' kcal';
 
             const fill = document.getElementById('progress-fill');
-            fill.style.width = today.pct + '%';
-            fill.textContent = today.pct + '%';
+            fill.style.width = pct + '%';
+            fill.textContent = pct + '%';
             fill.className = 'progress-bar-fill';
-            if (today.pct < 50) fill.classList.add('danger');
-            else if (today.pct < 80) fill.classList.add('warning');
+            if (pct < 50) fill.classList.add('danger');
+            else if (pct < 80) fill.classList.add('warning');
 
             // 7-day
-            document.getElementById('avg-cal').textContent = week.avg_cal;
-            document.getElementById('avg-min').textContent = week.avg_min;
-            document.getElementById('days-logged').textContent = week.days_logged;
+            const days = {};
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                days[d.toISOString().slice(0, 10)] = { cal: 0, mins: 0 };
+            }
+            workouts.forEach(w => {
+                if (days[w.date]) {
+                    days[w.date].cal += w.calories || 0;
+                    days[w.date].mins += w.duration_min || 0;
+                }
+            });
+            const dayEntries = Object.entries(days);
+            const avgCal = (dayEntries.reduce((s, [, v]) => s + v.cal, 0) / 7).toFixed(1);
+            const avgMin = (dayEntries.reduce((s, [, v]) => s + v.mins, 0) / 7).toFixed(1);
+            const daysLogged = dayEntries.filter(([, v]) => v.cal > 0).length;
+
+            document.getElementById('avg-cal').textContent = avgCal;
+            document.getElementById('avg-min').textContent = avgMin;
+            document.getElementById('days-logged').textContent = daysLogged;
 
             // Chart
-            const labels = week.days.map(d => d.date.slice(5));
-            const dataCal = week.days.map(d => d.cal || 0);
+            const labels = dayEntries.map(([d]) => d.slice(5));
+            const dataCal = dayEntries.map(([, v]) => v.cal);
             const ctx = document.getElementById('weekChart').getContext('2d');
             if (weekChartInstance) weekChartInstance.destroy();
             weekChartInstance = new Chart(ctx, {
@@ -207,35 +198,21 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#21262d' },
-                            ticks: { color: '#8b949e', font: { size: 11 } }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#8b949e', font: { size: 11 } }
-                        }
+                        y: { beginAtZero: true, grid: { color: '#21262d' }, ticks: { color: '#8b949e', font: { size: 11 } } },
+                        x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 11 } } }
                     }
                 }
             });
 
             // Table
             const tbody = document.getElementById('workout-table');
-            tbody.innerHTML = recent.workouts.slice(0, 15).map(w => {
+            tbody.innerHTML = workouts.slice(0, 15).map(w => {
                 const typeClass = w.type === 'Strength' ? 'badge-strength' : 'badge-cardio';
-                return `<tr>
-                    <td>${w.date}</td>
-                    <td>${w.machine}</td>
-                    <td><span class="badge ${typeClass}">${w.type}</span></td>
-                    <td>${w.duration_min}</td>
-                    <td><strong>${w.calories}</strong></td>
-                </tr>`;
+                return `<tr><td>${w.date}</td><td>${w.machine}</td><td><span class="badge ${typeClass}">${w.type}</span></td><td>${w.duration_min}</td><td><strong>${w.calories}</strong></td></tr>`;
             }).join('');
         }
 
         load();
-        setInterval(load, 30000);
     </script>
 </body>
 </html>
