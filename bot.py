@@ -101,9 +101,9 @@ def parse_ocr_text(text: str) -> dict:
         return result
 
     cal_patterns = [
-        r"(\d{3,4})\s*[Kk]?[Cc][Aa][Ll]",
-        r"[Cc][Aa][Ll][Oo][Rr][Ii][Ee][Ss]?\s*(\d{3,4})",
-        r"[Cc][Aa][Ll]\s*(\d{3,4})",
+        r"(\d{1,4})\s*[Kk]?[Cc][Aa][Ll]",
+        r"[Cc][Aa][Ll][Oo][Rr][Ii][Ee][Ss]?\s*(\d{1,4})",
+        r"[Cc][Aa][Ll]\s*(\d{1,4})",
     ]
     for pat in cal_patterns:
         m = re.search(pat, text)
@@ -218,11 +218,16 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return ConversationHandler.END
     context.user_data.clear()
     photo = update.message.photo[-1]
-    file = await photo.get_file()
-    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    ext = os.path.splitext(file.file_path)[1] or ".jpg"
-    path = os.path.join(config.PHOTO_DIR, f"workout_{ts}{ext}")
-    await file.download_to_drive(path)
+    try:
+        file = await photo.get_file()
+        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        ext = os.path.splitext(file.file_path)[1] or ".jpg"
+        path = os.path.join(config.PHOTO_DIR, f"workout_{ts}{ext}")
+        await file.download_to_drive(path)
+    except Exception as e:
+        logger.error("Photo download failed: %s", e)
+        await update.message.reply_text("❌ Failed to download photo. Try again or use /log.")
+        return ConversationHandler.END
     context.user_data["photo_path"] = path
 
     ocr_result = {}
@@ -447,6 +452,7 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         prs = db.get_machine_prs()
         previous_best = prs.get(machine)
 
+        context.user_data["_confirmed"] = True
         wid = db.add_workout(
             date=_today(),
             workout_type=d.get("workout_type", "Cardio"),
@@ -458,36 +464,38 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             notes=d.get("notes"),
             photo_path=d.get("photo_path"),
         )
-
-        import subprocess
-        try:
-            subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
-            subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
-            subprocess.run(["git", "commit", "-m", f"Auto-export workouts after log {wid}"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
-            subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
-        except Exception as e:
-            logger.error("Auto-export/push failed: %s", e)
-
-        today_rows = db.get_workouts_for_date(_today())
-        avg7 = db.get_7day_avg()
-        await query.edit_message_text(fmt_report(today_rows, avg7), parse_mode="Markdown")
-
-        if previous_best is None or calories > previous_best:
-            msg = f"🎉 New PR on {machine}: {calories} kcal"
-            if previous_best:
-                msg += f" (previous best: {previous_best})"
-            await context.bot.send_message(chat_id=config.USER_ID, text=msg)
-
-        context.user_data["_confirmed"] = True
     except Exception as e:
         logger.error("Confirm handler error: %s", e)
         await query.edit_message_text(f"❌ Error saving workout: {e}\nTry /log again.")
+        context.user_data.clear()
+        return ConversationHandler.END
+
+    try:
+        import subprocess
+        subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", f"Auto-export workouts after log {wid}"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+    except Exception as e:
+        logger.error("Auto-export/push failed: %s", e)
+
+    today_rows = db.get_workouts_for_date(_today())
+    avg7 = db.get_7day_avg()
+    await query.edit_message_text(fmt_report(today_rows, avg7), parse_mode="Markdown")
+
+    if previous_best is None or calories > previous_best:
+        msg = f"🎉 New PR on {machine}: {calories} kcal"
+        if previous_best:
+            msg += f" (previous best: {previous_best})"
+        await context.bot.send_message(chat_id=config.USER_ID, text=msg)
 
     context.user_data.clear()
     return ConversationHandler.END
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if not _authorized(update):
+        return ConversationHandler.END
     await update.message.reply_text("Cancelled.")
     context.user_data.clear()
     return ConversationHandler.END
@@ -555,6 +563,9 @@ async def weight_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         w = float(text)
     except ValueError:
         await update.message.reply_text("Usage: /weight 87.5")
+        return
+    if w <= 0:
+        await update.message.reply_text("Weight must be positive.")
         return
     db.add_body_metric(_today(), weight_kg=w)
     await update.message.reply_text(f"Logged weight: {w} kg")
