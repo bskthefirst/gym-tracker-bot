@@ -41,6 +41,13 @@ TYPE_MAP = {
     "Strength- Others": "Strength",
 }
 
+# kcal/min estimate for strength machines when user skips calorie entry
+STRENGTH_CAL_RATES = {
+    "Bicep-Tricep Curl": 4.0,
+    "Leg": 6.0,
+    "Strength- Others": 5.0,
+}
+
 SKIP_KEYBOARD = InlineKeyboardMarkup([[InlineKeyboardButton("⏭️ Skip", callback_data="skip")]])
 
 DEFAULT_KEYBOARD = ReplyKeyboardMarkup(
@@ -287,9 +294,14 @@ async def duration_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 async def _ask_calories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     msg_obj = update.message or update.callback_query.message
     ocr = context.user_data.get("ocr", {})
+    machine = context.user_data.get("machine", "")
     if ocr.get("calories"):
         context.user_data["calories"] = ocr["calories"]
         msg = f"Duration: {round(context.user_data['duration_min'])} min\nOCR calories: {ocr['calories']}\n\nReply with calories, or tap Skip to keep."
+    elif machine in STRENGTH_CAL_RATES:
+        rate = STRENGTH_CAL_RATES[machine]
+        est = round(context.user_data.get('duration_min', 0) * rate)
+        msg = f"Reply with calories, or tap Skip to auto-estimate (~{est} kcal):"
     else:
         msg = "Reply with calories shown on machine:"
     await msg_obj.reply_text(msg, reply_markup=SKIP_KEYBOARD)
@@ -312,8 +324,14 @@ async def calories_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 async def calories_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
+    machine = context.user_data.get("machine", "")
     if "calories" not in context.user_data:
-        await query.edit_message_text("No OCR calories to skip. Reply with calories:")
+        if machine in STRENGTH_CAL_RATES and "duration_min" in context.user_data:
+            estimated = round(context.user_data["duration_min"] * STRENGTH_CAL_RATES[machine])
+            context.user_data["calories"] = estimated
+            await query.edit_message_text(f"Calories: {estimated} kcal (auto-estimated) ✅")
+            return await _ask_distance(update, context)
+        await query.edit_message_text("No calories to skip. Reply with calories:")
         return CALORIES
     await query.edit_message_text(f"Calories: {context.user_data['calories']} kcal ✅")
     return await _ask_distance(update, context)
