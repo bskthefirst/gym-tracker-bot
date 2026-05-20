@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-05-20T17:30:15.460014Z",
+  "exported_at": "2026-05-20T17:30:52.836039Z",
   "workouts": [
+    {
+      "id": 104,
+      "date": "2026-05-20",
+      "day": "Wed",
+      "type": "Strength",
+      "machine": "Bicep-Tricep Curl",
+      "duration_min": 10.0,
+      "calories": 40.0,
+      "adj_calories": 40.0,
+      "level": null,
+      "distance": null,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": null,
+      "photo_path": null,
+      "created_at": "2026-05-20 17:30:52"
+    },
     {
       "id": 103,
       "date": "2026-05-20",
@@ -946,10 +964,10 @@
   },
   "streak": 21,
   "prs": {
+    "Bicep-Tricep Curl": 82.0,
     "Incline Treadmill": 590.0,
     "Indoor Cycling": 483.0,
     "Stair Master": 560.0,
-    "Strength- Others": 82.0,
-    "Bicep-Tricep Curl": 82.0
+    "Strength- Others": 82.0
   }
 }
