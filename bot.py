@@ -4,7 +4,7 @@ import datetime
 import logging
 from typing import Optional
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -42,6 +42,10 @@ TYPE_MAP = {
 }
 
 SKIP_KEYBOARD = InlineKeyboardMarkup([[InlineKeyboardButton("⏭️ Skip", callback_data="skip")]])
+
+DEFAULT_KEYBOARD = ReplyKeyboardMarkup(
+    [["Log Workout"]], resize_keyboard=True, one_time_keyboard=False
+)
 
 
 def _authorized(update: Update) -> bool:
@@ -137,7 +141,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     today_rows = db.get_workouts_for_date(_today())
     avg7 = db.get_7day_avg()
-    await update.message.reply_text(fmt_report(today_rows, avg7), parse_mode="Markdown")
+    await update.message.reply_text(
+        fmt_report(today_rows, avg7), parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD
+    )
 
 
 async def today_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -145,7 +151,9 @@ async def today_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     today_rows = db.get_workouts_for_date(_today())
     avg7 = db.get_7day_avg()
-    await update.message.reply_text(fmt_report(today_rows, avg7), parse_mode="Markdown")
+    await update.message.reply_text(
+        fmt_report(today_rows, avg7), parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD
+    )
 
 
 async def week_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -544,7 +552,9 @@ async def daily_report(context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     avg7 = db.get_7day_avg()
     text = fmt_report(today_rows, avg7)
-    await context.bot.send_message(chat_id=config.USER_ID, text=text, parse_mode="Markdown")
+    await context.bot.send_message(
+        chat_id=config.USER_ID, text=text, parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD
+    )
 
 
 async def beat_yesterday_report(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -562,7 +572,9 @@ async def beat_yesterday_report(context: ContextTypes.DEFAULT_TYPE) -> None:
             lines.append("🎯 Already beat yesterday!")
     else:
         lines.append("No workout yesterday. Today is a fresh start.")
-    await context.bot.send_message(chat_id=config.USER_ID, text="\n".join(lines), parse_mode="Markdown")
+    await context.bot.send_message(
+        chat_id=config.USER_ID, text="\n".join(lines), parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD
+    )
 
 
 async def weekly_alert(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -584,7 +596,9 @@ async def weekly_alert(context: ContextTypes.DEFAULT_TYPE) -> None:
         lines.append(f"⚠️ Need *{min_gap}* min to hit weekly cardio target.")
     else:
         lines.append("🎯 Weekly targets reached!")
-    await context.bot.send_message(chat_id=config.USER_ID, text="\n".join(lines), parse_mode="Markdown")
+    await context.bot.send_message(
+        chat_id=config.USER_ID, text="\n".join(lines), parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD
+    )
 
 
 def main() -> None:
@@ -594,6 +608,7 @@ def main() -> None:
     conv = ConversationHandler(
         entry_points=[
             CommandHandler("log", log_cmd),
+            MessageHandler(filters.Regex("^(Log Workout)$"), log_cmd),
             MessageHandler(filters.PHOTO, photo_received),
         ],
         states={
