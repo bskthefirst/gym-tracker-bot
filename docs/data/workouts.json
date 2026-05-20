@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-05-19T21:43:57.363847Z",
+  "exported_at": "2026-05-20T17:30:15.460014Z",
   "workouts": [
+    {
+      "id": 103,
+      "date": "2026-05-20",
+      "day": "Wed",
+      "type": "Cardio",
+      "machine": "Incline Treadmill",
+      "duration_min": 46.0,
+      "calories": 455.0,
+      "adj_calories": 455.0,
+      "level": null,
+      "distance": 2.09,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": null,
+      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260520_122935.jpg",
+      "created_at": "2026-05-20 17:30:15"
+    },
     {
       "id": 102,
       "date": "2026-05-19",
@@ -926,7 +944,7 @@
     "daily_goal_kcal": "1000",
     "target_cardio_min_week": "240"
   },
-  "streak": 20,
+  "streak": 21,
   "prs": {
     "Incline Treadmill": 590.0,
     "Indoor Cycling": 483.0,
