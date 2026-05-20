@@ -42,10 +42,12 @@ TYPE_MAP = {
 }
 
 # kcal/min estimate for strength machines when user skips calorie entry
+# Sources: Reis et al. 2017 (PLoS One), Adeel et al. 2021 (Appl. Sci.),
+# StrongerByScience review of João et al. 2022.
 STRENGTH_CAL_RATES = {
-    "Bicep-Tricep Curl": 4.0,
-    "Leg": 6.0,
-    "Strength- Others": 5.0,
+    "Bicep-Tricep Curl": 3.5,   # upper isolation, moderate intensity: 2.7–3.9 kcal/min
+    "Leg": 6.0,                 # lower machine (leg press): 5.0–7.3 kcal/min
+    "Strength- Others": 5.5,    # compound mixed: 5.5–6.0 kcal/min
 }
 
 SKIP_KEYBOARD = InlineKeyboardMarkup([[InlineKeyboardButton("⏭️ Skip", callback_data="skip")]])
