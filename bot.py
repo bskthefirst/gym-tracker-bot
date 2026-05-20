@@ -24,7 +24,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Conversation states
-PHOTO, TYPE, DURATION, CALORIES, DISTANCE, NOTES, CONFIRM = range(7)
+PHOTO, TYPE, DURATION, CALORIES, DISTANCE, CONFIRM = range(6)
 
 MACHINE_OPTIONS = [
     ["Stair Master", "Incline Treadmill"],
@@ -369,36 +369,13 @@ async def distance_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             await update.message.reply_text("Send a number for distance, or /cancel:")
             return DISTANCE
 
-    return await _ask_notes(update, context)
+    return await _ask_confirm(update, context)
 
 
 async def distance_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     await query.edit_message_text("Distance skipped ✅")
-    return await _ask_notes(update, context)
-
-
-async def _ask_notes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    msg_obj = update.message or update.callback_query.message
-    await msg_obj.reply_text(
-        "Any notes? Reply with text, or tap Skip:", reply_markup=SKIP_KEYBOARD
-    )
-    return NOTES
-
-
-async def notes_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    text = update.message.text.strip()
-    if text == "/cancel":
-        return await cancel(update, context)
-    context.user_data["notes"] = text
-    return await _ask_confirm(update, context)
-
-
-async def notes_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    await query.edit_message_text("Notes skipped ✅")
     return await _ask_confirm(update, context)
 
 
@@ -412,8 +389,6 @@ async def _ask_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     )
     if "distance" in d:
         summary += f"\n  • {d['distance']} km"
-    if "notes" in d:
-        summary += f"\n  • Note: {d['notes']}"
 
     keyboard = [
         [
@@ -644,10 +619,6 @@ def main() -> None:
             DISTANCE: [
                 MessageHandler(filters.TEXT, distance_received),
                 CallbackQueryHandler(distance_skip, pattern="^skip$"),
-            ],
-            NOTES: [
-                MessageHandler(filters.TEXT, notes_received),
-                CallbackQueryHandler(notes_skip, pattern="^skip$"),
             ],
             CONFIRM: [CallbackQueryHandler(confirm_handler)],
         },
