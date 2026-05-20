@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Daily Gmail brief via Himalaya + Telegram.
-Fetches recent emails, groups them, sends summary to Telegram.
+Only reports new or noteworthy items. Skips routine noise.
 """
 import os
 import subprocess
@@ -12,6 +12,27 @@ from datetime import datetime, timezone, timedelta
 TELEGRAM_TOKEN = os.environ.get("GYM_BOT_TOKEN", "").strip()
 USER_ID = os.environ.get("USER_ID", "8578040659").strip()
 CDT = timezone(timedelta(hours=-5))
+
+# Routine noise: skip these subjects/senders entirely
+SKIP_SUBJECT_PATTERNS = [
+    r"보안 알림",                      # Google Security (Korean)
+    r"security alert",                # Google Security (English)
+    r"delivery status notification",  # Bouncebacks
+    r"mailer-daemon",
+    r"ingredientcompliance\.com receipt",  # Routine receipts
+    r"get to know your new paypal",   # Onboarding
+    r"recent paypal interaction",
+    r"은행계좌를 확인해",               # PayPal bank verify (Korean)
+    r"bank account confirmed",
+    r"link a bank account",           # PayPal onboarding
+    r"your monthly statement",
+    r"transaction confirmation",
+]
+
+SKIP_SENDER_PATTERNS = [
+    r"mailer-daemon",
+    r"no-reply@accounts\.google\.com",
+]
 
 
 def sh(cmd, timeout=30):
@@ -48,18 +69,31 @@ def fetch_emails():
         return []
 
 
+def is_noise(e):
+    """Return True if this email is routine noise we should skip."""
+    subject = (e.get("subject") or "").lower()
+    from_obj = e.get("from", {}) or {}
+    sender_addr = (from_obj.get("addr") or "").lower()
+    sender_name = (from_obj.get("name") or "").lower()
+    combined = f"{subject} {sender_addr} {sender_name}"
+
+    for pat in SKIP_SUBJECT_PATTERNS:
+        if re.search(pat, combined, re.IGNORECASE):
+            return True
+    for pat in SKIP_SENDER_PATTERNS:
+        if re.search(pat, combined, re.IGNORECASE):
+            return True
+    return False
+
+
 def classify_email(e):
     """Classify email by sender/subject for grouping."""
     from_obj = e.get("from", {}) or {}
     sender_addr = (from_obj.get("addr") or "").lower()
     sender_name = (from_obj.get("name") or "").lower()
-    sender = f"{sender_name} {sender_addr}"
     subject = (e.get("subject") or "").lower()
+    sender = f"{sender_name} {sender_addr}"
 
-    if "delivery status" in subject or "mailer-daemon" in sender_addr:
-        return "system", "📤 System"
-    if "google" in sender or "no-reply@accounts.google.com" in sender_addr:
-        return "security", "🚨 Google Security"
     if "paypal" in sender:
         return "paypal", "💰 PayPal"
     if "ingredientcompliance" in sender or "gerim-sterling" in sender:
@@ -74,69 +108,43 @@ def classify_email(e):
 def brief():
     emails = fetch_emails()
     if not emails:
-        send_telegram("📧 *Gmail Brief*\n\nNo emails fetched (Himalaya error or empty inbox).")
+        print("[SKIP] No emails fetched.")
         return
 
-    # Group by category
+    # Filter out noise
+    noteworthy = [e for e in emails if not is_noise(e)]
+
+    if not noteworthy:
+        # Silent skip — no spam on quiet days
+        print("[SKIP] Nothing noteworthy today.")
+        return
+
+    # Group noteworthy items
     groups = {}
-    flagged = []
-    today_cdt = datetime.now(CDT).date()
-
-    for e in emails:
+    for e in noteworthy:
         cat, label = classify_email(e)
+        groups.setdefault(cat, []).append((e, label))
+
+    lines = ["📧 *Gmail Brief* — _" + datetime.now(CDT).strftime("%Y-%m-%d %H:%M CDT") + "_"]
+
+    # Build compact sections
+    sections = []
+    for cat in ("paypal", "business", "finance", "notification", "other"):
         if cat not in groups:
-            groups[cat] = []
-        groups[cat].append((e, label))
-
-        # Flag recent security alerts or failures
-        date_str = e.get("date", "")
-        if cat in ("security", "system"):
-            flagged.append(e)
-
-    lines = ["📧 *Daily Gmail Brief*"]
-    lines.append(f"_{datetime.now(CDT).strftime('%Y-%m-%d %H:%M CDT')}_")
-    lines.append("")
-
-    # Security / System alerts first
-    if "security" in groups or "system" in groups:
-        lines.append("*⚠️ Alerts & Issues:*")
-        for cat in ("security", "system"):
-            if cat in groups:
-                for e, label in groups[cat][:3]:
-                    subj = e.get("subject", "No subject")
-                    sender = e.get("from", "Unknown")
-                    lines.append(f"  • {label}: _{subj}_")
-        lines.append("")
-
-    # Business / Finance
-    if "business" in groups or "finance" in groups:
-        lines.append("*💼 Business & Finance:*")
-        for cat in ("business", "finance"):
-            if cat in groups:
-                for e, label in groups[cat][:3]:
-                    subj = e.get("subject", "No subject")
-                    lines.append(f"  • {subj}")
-        lines.append("")
-
-    # PayPal
-    if "paypal" in groups:
-        lines.append("*💰 PayPal:*")
-        for e, label in groups["paypal"][:3]:
+            continue
+        items = groups[cat][:3]  # max 3 per category
+        label = items[0][1]
+        section_lines = [f"*{label}*"]
+        for e, _ in items:
             subj = e.get("subject", "No subject")
-            lines.append(f"  • {subj}")
-        lines.append("")
+            section_lines.append(f"  • {subj}")
+        sections.append("\n".join(section_lines))
 
-    # Summary stats
-    total = len(emails)
-    lines.append(f"*📊 Total checked: {total} emails*")
+    if not sections:
+        print("[SKIP] All remaining items were noise after classification.")
+        return
 
-    # Flag if nothing important
-    important_cats = {"security", "system", "business", "finance"}
-    has_important = any(c in groups for c in important_cats)
-    if not has_important:
-        lines.append("Nothing urgent. All routine.")
-
-    msg = "\n".join(lines)
+    msg = "\n".join(lines) + "\n\n" + "\n\n".join(sections)
     print(msg)
     send_telegram(msg)
 
