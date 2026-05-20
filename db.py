@@ -46,6 +46,11 @@ def init_db() -> None:
             note TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS rest_days (
+            date TEXT PRIMARY KEY,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+
         INSERT OR IGNORE INTO settings (key, value, note) VALUES
             ('calorie_adjustment_factor', '1.0', 'Dashboard uses 100% of machine calories'),
             ('daily_goal_kcal', '1000', 'Stretch workout calories/day objective'),
@@ -208,23 +213,41 @@ def get_yesterday_summary() -> Dict[str, Any]:
 
 def get_streak() -> int:
     with get_conn() as conn:
-        rows = conn.execute("SELECT DISTINCT date FROM workouts ORDER BY date DESC").fetchall()
-    if not rows:
+        workout_dates = {r["date"] for r in conn.execute("SELECT DISTINCT date FROM workouts").fetchall()}
+        rest_dates = {r["date"] for r in conn.execute("SELECT date FROM rest_days").fetchall()}
+    active_dates = workout_dates | rest_dates
+    if not active_dates:
         return 0
-    date_set = {r["date"] for r in rows}
     today = datetime.date.today()
     today_str = today.isoformat()
     yesterday_str = (today - datetime.timedelta(days=1)).isoformat()
-    if today_str not in date_set and yesterday_str not in date_set:
+    if today_str not in active_dates and yesterday_str not in active_dates:
         return 0
     streak = 0
     for i in range(365):
         d = (today - datetime.timedelta(days=i)).isoformat()
-        if d in date_set:
+        if d in active_dates:
             streak += 1
         else:
             break
     return streak
+
+
+def mark_rest_day(date: str) -> None:
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO rest_days (date) VALUES (?)",
+            (date,),
+        )
+        conn.commit()
+
+
+def is_rest_day(date: str) -> bool:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM rest_days WHERE date = ?", (date,)
+        ).fetchone()
+    return bool(row)
 
 
 def get_week_summary(date: Optional[str] = None) -> Dict[str, Any]:

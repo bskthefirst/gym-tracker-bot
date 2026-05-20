@@ -53,7 +53,7 @@ STRENGTH_CAL_RATES = {
 SKIP_KEYBOARD = InlineKeyboardMarkup([[InlineKeyboardButton("⏭️ Skip", callback_data="skip")]])
 
 DEFAULT_KEYBOARD = ReplyKeyboardMarkup(
-    [["Log Workout"]], resize_keyboard=True, one_time_keyboard=False
+    [["Log Workout", "🛌 Rest Day"]], resize_keyboard=True, one_time_keyboard=False
 )
 
 
@@ -72,6 +72,8 @@ def fmt_report(today_rows, avg7) -> str:
     lines = []
     if streak > 1:
         lines.append(f"🔥 *{streak} day streak*")
+    if db.is_rest_day(_today()):
+        lines.append("🛌 *Rest Day*")
     lines.append("📋 *Today Total*")
     if not today_rows:
         lines.append("No workouts logged yet.")
@@ -178,6 +180,23 @@ async def week_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     lines.append("")
     lines.append(f"7-day avg: *{avg7['avg_cal']}* kcal/day, *{round(avg7['avg_min'])}* min/day")
     await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+
+
+async def rest_day_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _authorized(update):
+        return
+    today = _today()
+    if db.is_rest_day(today):
+        await update.message.reply_text(
+            "🛌 Today is already marked as a rest day.", reply_markup=DEFAULT_KEYBOARD
+        )
+        return
+    db.mark_rest_day(today)
+    streak = db.get_streak()
+    msg = "🛌 Rest day marked for today."
+    if streak > 1:
+        msg += f"\n🔥 Streak alive: *{streak}* days"
+    await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD)
 
 
 async def log_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -543,7 +562,7 @@ async def weight_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 async def daily_report(context: ContextTypes.DEFAULT_TYPE) -> None:
     today_rows = db.get_workouts_for_date(_today())
-    if not today_rows:
+    if not today_rows and not db.is_rest_day(_today()):
         return
     avg7 = db.get_7day_avg()
     text = fmt_report(today_rows, avg7)
@@ -628,8 +647,10 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("today", today_cmd))
     application.add_handler(CommandHandler("week", week_cmd))
+    application.add_handler(CommandHandler("rest", rest_day_cmd))
     application.add_handler(CommandHandler("export", export_cmd))
     application.add_handler(CommandHandler("weight", weight_cmd))
+    application.add_handler(MessageHandler(filters.Regex("^(🛌 Rest Day)$"), rest_day_cmd))
     application.add_handler(conv)
 
     job_queue = application.job_queue
