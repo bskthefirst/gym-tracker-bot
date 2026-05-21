@@ -163,15 +163,14 @@ def brief():
 
     msg = "\n".join(lines) + "\n\n" + "\n\n".join(sections)
 
-    # Deduplication: don't send identical content twice on the same day
+    # Deduplication: don't send identical content twice
     state = _load_state()
     today = datetime.now(CDT).strftime("%Y-%m-%d")
     import hashlib
     content_hash = hashlib.md5(msg.encode("utf-8")).hexdigest()
-    last_sent = state.get("last_sent_date")
     last_hash = state.get("last_content_hash")
-    if last_sent == today and last_hash == content_hash:
-        print("[SKIP] Identical brief already sent today.")
+    if last_hash == content_hash:
+        print("[SKIP] Identical brief already sent previously.")
         return
 
     print(msg)

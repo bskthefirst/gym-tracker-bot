@@ -680,6 +680,31 @@ async def weekly_alert(context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
+async def daily_gmail_brief(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Run the standalone Gmail brief script. It handles its own
+    noise filtering, deduplication, and Telegram sending."""
+    import subprocess
+    import sys
+    try:
+        proc = subprocess.run(
+            [sys.executable, "scripts/gmail_brief.py"],
+            cwd="/Users/billkim/gym-tracker",
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if proc.returncode != 0:
+            logger.error("daily_gmail_brief failed: %s", proc.stderr)
+        else:
+            out = proc.stdout.strip()
+            if out and not out.startswith("[SKIP]"):
+                logger.info("daily_gmail_brief sent: %s", out[:200])
+            else:
+                logger.info("daily_gmail_brief: %s", out or "no output")
+    except Exception as e:
+        logger.error("daily_gmail_brief exception: %s", e)
+
+
 def main() -> None:
     db.init_db()
     application = Application.builder().token(config.BOT_TOKEN).build()
@@ -724,6 +749,8 @@ def main() -> None:
     job_queue.run_daily(daily_report, time=datetime.time(hour=config.DAILY_REPORT_HOUR, minute=0))
     # Morning challenge — Mon/Wed/Fri 8:10 AM CDT
     job_queue.run_daily(beat_yesterday_report, time=datetime.time(hour=8, minute=10), days=(0, 2, 4))
+    # Daily Gmail brief — 9:00 AM CDT
+    job_queue.run_daily(daily_gmail_brief, time=datetime.time(hour=9, minute=0))
     # Saturday 9:00 AM CDT (Mini local time)
     job_queue.run_daily(weekly_alert, time=datetime.time(hour=9, minute=0), days=(5,))
 
