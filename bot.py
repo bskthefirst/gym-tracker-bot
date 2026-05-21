@@ -53,7 +53,7 @@ STRENGTH_CAL_RATES = {
 SKIP_KEYBOARD = InlineKeyboardMarkup([[InlineKeyboardButton("⏭️ Skip", callback_data="skip")]])
 
 DEFAULT_KEYBOARD = ReplyKeyboardMarkup(
-    [["Log Workout", "🛌 Rest Day"]], resize_keyboard=True, one_time_keyboard=False
+    [["Log Workout", "⚖️ Weight"], ["🛌 Rest Day"]], resize_keyboard=True, one_time_keyboard=False
 )
 
 
@@ -662,6 +662,7 @@ def main() -> None:
     application.add_handler(CommandHandler("export", export_cmd))
     application.add_handler(CommandHandler("weight", weight_cmd))
     application.add_handler(MessageHandler(filters.Regex("^(🛌 Rest Day)$"), rest_day_cmd))
+    application.add_handler(MessageHandler(filters.Regex("^(⚖️ Weight)$"), weight_cmd))
     application.add_handler(conv)
 
     job_queue = application.job_queue
