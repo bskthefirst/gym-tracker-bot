@@ -157,48 +157,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-async def today_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not _authorized(update):
-        return
-    today_rows = db.get_workouts_for_date(_today())
-    avg7 = db.get_7day_avg()
-    await update.message.reply_text(
-        fmt_report(today_rows, avg7), parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD
-    )
-
-
-async def week_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not _authorized(update):
-        return
-    avg7 = db.get_7day_avg()
-    recent = db.get_recent_workouts(7)
-    lines = ["📅 *Last 7 Days*"]
-    for w in recent:
-        lines.append(
-            f"  • {w['date']} {w['day']} — {w['machine']} {w['calories']} kcal"
-        )
-    lines.append("")
-    lines.append(f"7-day avg: *{avg7['avg_cal']}* kcal/day, *{round(avg7['avg_min'])}* min/day")
-    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
-
-
-async def rest_day_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not _authorized(update):
-        return
-    today = _today()
-    if db.is_rest_day(today):
-        await update.message.reply_text(
-            "🛌 Today is already marked as a rest day.", reply_markup=DEFAULT_KEYBOARD
-        )
-        return
-    db.mark_rest_day(today)
-    streak = db.get_streak()
-    msg = "🛌 Rest day marked for today."
-    if streak > 1:
-        msg += f"\n🔥 Streak alive: *{streak}* days"
-    await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD)
-
-
 async def log_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not _authorized(update):
         return ConversationHandler.END
@@ -555,7 +513,12 @@ async def export_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 async def weight_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _authorized(update):
         return
+    # Cancel any active conversation
+    context.user_data.clear()
     text = update.message.text.replace("/weight", "").strip()
+    if text == "⚖️ Weight":
+        await update.message.reply_text("Send your weight in kg (e.g., 87.5):")
+        return
     if not text:
         await update.message.reply_text("Usage: /weight 87.5")
         return
@@ -568,7 +531,88 @@ async def weight_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         await update.message.reply_text("Weight must be positive.")
         return
     db.add_body_metric(_today(), weight_kg=w)
-    await update.message.reply_text(f"Logged weight: {w} kg")
+    reply = f"Logged weight: {w} kg"
+    proj = db.weight_projection()
+    if proj:
+        reply += f"\n📊 7-day avg: {proj['current_ma']} kg"
+        reply += f"\n📉 Trend: {proj['slope_kg_week']:+} kg/week"
+        if proj['weeks_to_goal'] is not None:
+            if proj['weeks_to_goal'] > 0:
+                reply += f"\n🎯 Goal {proj['goal']} kg: ~{proj['weeks_to_goal']} weeks"
+            else:
+                reply += f"\n🎯 Goal {proj['goal']} kg: already there or passed"
+        elif proj['message']:
+            reply += f"\n{proj['message']}"
+    await update.message.reply_text(reply)
+
+
+async def goal_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _authorized(update):
+        return
+    context.user_data.clear()
+    text = update.message.text.replace("/goal", "").strip()
+    if not text:
+        current = db.get_goal_weight()
+        if current:
+            await update.message.reply_text(f"Current goal: {current} kg\nTo change: /goal 80")
+        else:
+            await update.message.reply_text("No goal set. Use /goal 80")
+        return
+    try:
+        w = float(text)
+    except ValueError:
+        await update.message.reply_text("Usage: /goal 80")
+        return
+    if w <= 0:
+        await update.message.reply_text("Goal must be positive.")
+        return
+    db.set_goal_weight(w)
+    await update.message.reply_text(f"Goal set: {w} kg")
+
+
+async def rest_day_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _authorized(update):
+        return
+    context.user_data.clear()
+    today = _today()
+    if db.is_rest_day(today):
+        await update.message.reply_text(
+            "🛌 Today is already marked as a rest day.", reply_markup=DEFAULT_KEYBOARD
+        )
+        return
+    db.mark_rest_day(today)
+    streak = db.get_streak()
+    msg = "🛌 Rest day marked for today."
+    if streak > 1:
+        msg += f"\n🔥 Streak alive: *{streak}* days"
+    await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD)
+
+
+async def today_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _authorized(update):
+        return
+    context.user_data.clear()
+    today_rows = db.get_workouts_for_date(_today())
+    avg7 = db.get_7day_avg()
+    await update.message.reply_text(
+        fmt_report(today_rows, avg7), parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD
+    )
+
+
+async def week_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _authorized(update):
+        return
+    context.user_data.clear()
+    avg7 = db.get_7day_avg()
+    recent = db.get_recent_workouts(7)
+    lines = ["📅 *Last 7 Days*"]
+    for w in recent:
+        lines.append(
+            f"  • {w['date']} {w['day']} — {w['machine']} {w['calories']} kcal"
+        )
+    lines.append("")
+    lines.append(f"7-day avg: *{avg7['avg_cal']}* kcal/day, *{round(avg7['avg_min'])}* min/day")
+    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
 
 
 async def daily_report(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -660,6 +704,7 @@ def main() -> None:
     application.add_handler(CommandHandler("week", week_cmd))
     application.add_handler(CommandHandler("rest", rest_day_cmd))
     application.add_handler(CommandHandler("export", export_cmd))
+    application.add_handler(CommandHandler("goal", goal_cmd))
     application.add_handler(CommandHandler("weight", weight_cmd))
     application.add_handler(MessageHandler(filters.Regex("^(🛌 Rest Day)$"), rest_day_cmd))
     application.add_handler(MessageHandler(filters.Regex("^(⚖️ Weight)$"), weight_cmd))

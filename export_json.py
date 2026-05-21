@@ -29,22 +29,28 @@ def export():
         "SELECT * FROM body_metrics ORDER BY date DESC"
     ).fetchall()
 
+    rest_days = cur.execute(
+        "SELECT date FROM rest_days ORDER BY date DESC"
+    ).fetchall()
+    rest_dates = {r["date"] for r in rest_days}
+
     settings = {}
     for row in cur.execute("SELECT key, value FROM settings"):
         settings[row["key"]] = row["value"]
 
     conn.close()
 
-    # Compute streak
+    # Compute streak (workouts + rest days = active)
     streak = 0
     dates = {w["date"] for w in workouts}
+    active_dates = dates | rest_dates
     today = datetime.date.today()
     today_str = today.isoformat()
     yesterday_str = (today - datetime.timedelta(days=1)).isoformat()
-    if today_str in dates or yesterday_str in dates:
+    if today_str in active_dates or yesterday_str in active_dates:
         for i in range(365):
             d = (today - datetime.timedelta(days=i)).isoformat()
-            if d in dates:
+            if d in active_dates:
                 streak += 1
             else:
                 break

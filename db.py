@@ -144,6 +144,92 @@ def add_body_metric(date: str, weight_kg: Optional[float] = None, waist_cm: Opti
         conn.commit()
 
 
+def set_goal_weight(weight_kg: float) -> None:
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            ("goal_weight_kg", str(weight_kg)),
+        )
+        conn.commit()
+
+
+def get_goal_weight() -> Optional[float]:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT value FROM settings WHERE key = 'goal_weight_kg'"
+        ).fetchone()
+    return float(row["value"]) if row else None
+
+
+def get_body_metrics() -> List[sqlite3.Row]:
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT * FROM body_metrics WHERE weight_kg IS NOT NULL ORDER BY date"
+        ).fetchall()
+
+
+def _moving_average(values: List[float], window: int = 7) -> List[float]:
+    result = []
+    for i in range(len(values)):
+        start = max(0, i - window + 1)
+        window_vals = values[start:i + 1]
+        result.append(sum(window_vals) / len(window_vals))
+    return result
+
+
+def weight_projection() -> Optional[Dict[str, Any]]:
+    """Compute 7-day MA, linear regression slope, and ETA to goal.
+    Returns dict with current_ma, slope_kg_week, weeks_to_goal, goal,
+    or None if insufficient data.
+    """
+    rows = get_body_metrics()
+    if len(rows) < 7:
+        return None
+    goal = get_goal_weight()
+    if goal is None:
+        return None
+
+    dates = [r["date"] for r in rows]
+    weights = [r["weight_kg"] for r in rows]
+    ma = _moving_average(weights, window=7)
+
+    # Use last 30 days of MA (or all available)
+    n = min(30, len(ma))
+    x = list(range(n))  # day indices 0, 1, 2, ...
+    y = ma[-n:]
+
+    # Simple linear regression: y = mx + b
+    n_val = len(x)
+    sum_x = sum(x)
+    sum_y = sum(y)
+    sum_xy = sum(xi * yi for xi, yi in zip(x, y))
+    sum_x2 = sum(xi * xi for xi in x)
+    denom = n_val * sum_x2 - sum_x * sum_x
+    if denom == 0:
+        return None
+    slope = (n_val * sum_xy - sum_x * sum_y) / denom  # kg per day index
+    slope_kg_week = slope * 7  # kg per week
+
+    current_ma = ma[-1]
+    delta = current_ma - goal
+    if abs(slope_kg_week) < 0.05:  # less than 50g/week = essentially flat
+        return {
+            "current_ma": round(current_ma, 1),
+            "slope_kg_week": round(slope_kg_week, 2),
+            "weeks_to_goal": None,
+            "goal": round(goal, 1),
+            "message": "Weight trend is flat. No ETA available.",
+        }
+    weeks_to_goal = delta / slope_kg_week
+    return {
+        "current_ma": round(current_ma, 1),
+        "slope_kg_week": round(slope_kg_week, 2),
+        "weeks_to_goal": round(weeks_to_goal, 1),
+        "goal": round(goal, 1),
+        "message": None,
+    }
+
+
 def get_7day_avg(date: Optional[str] = None) -> Dict[str, Any]:
     if date is None:
         date = _today()
