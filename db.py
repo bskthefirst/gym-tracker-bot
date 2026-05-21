@@ -355,6 +355,82 @@ def is_rest_day(date: str) -> bool:
     return bool(row)
 
 
+def set_profile(height_cm: float, age: int, gender: str, pal: float) -> None:
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            ("profile_height_cm", str(height_cm)),
+        )
+        conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            ("profile_age", str(age)),
+        )
+        conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            ("profile_gender", gender.lower()),
+        )
+        conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            ("profile_pal", str(pal)),
+        )
+        conn.commit()
+
+
+def get_profile() -> Optional[Dict[str, Any]]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT key, value FROM settings WHERE key LIKE 'profile_%'"
+        ).fetchall()
+    if not rows:
+        return None
+    d = {r["key"].replace("profile_", ""): r["value"] for r in rows}
+    try:
+        return {
+            "height_cm": float(d.get("height_cm", 0)),
+            "age": int(d.get("age", 0)),
+            "gender": d.get("gender", ""),
+            "pal": float(d.get("pal", 1.4)),
+        }
+    except (ValueError, TypeError):
+        return None
+
+
+def set_target_date(target_date: str) -> None:
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            ("target_date", target_date),
+        )
+        conn.commit()
+
+
+def get_target_date() -> Optional[str]:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT value FROM settings WHERE key = 'target_date'"
+        ).fetchone()
+    return row["value"] if row else None
+
+
+def get_weight_math_inputs() -> Optional[Dict[str, Any]]:
+    profile = get_profile()
+    goal = get_goal_weight()
+    target = get_target_date()
+    metrics = get_body_metrics()
+    if not profile or goal is None or not metrics:
+        return None
+    latest = metrics[-1]
+    current_weight = latest["weight_kg"]
+    return {
+        "profile": profile,
+        "goal": goal,
+        "target_date": target,
+        "current_weight": current_weight,
+        "latest_date": latest["date"],
+        "metrics": metrics,
+    }
+
+
 def get_week_summary(date: Optional[str] = None) -> Dict[str, Any]:
     if date is None:
         date = _today()

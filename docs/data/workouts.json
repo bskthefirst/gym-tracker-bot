@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-05-21T17:28:40.202721Z",
+  "exported_at": "2026-05-21T17:34:37.376448Z",
   "workouts": [
     {
       "id": 107,
@@ -1023,7 +1023,12 @@
     "calorie_adjustment_factor": "1.0",
     "daily_goal_kcal": "1000",
     "target_cardio_min_week": "240",
-    "goal_weight_kg": "80.0"
+    "profile_height_cm": "170",
+    "profile_age": "30",
+    "profile_gender": "male",
+    "profile_pal": "1.4",
+    "goal_weight_kg": "80",
+    "target_date": "2026-06-10"
   },
   "streak": 22,
   "prs": {

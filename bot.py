@@ -66,6 +66,96 @@ def _today() -> str:
     return datetime.date.today().isoformat()
 
 
+def compute_weight_math() -> Optional[str]:
+    inputs = db.get_weight_math_inputs()
+    if not inputs:
+        return None
+
+    profile = inputs["profile"]
+    goal = inputs["goal"]
+    target_date = inputs["target_date"]
+    current_weight = inputs["current_weight"]
+    metrics = inputs["metrics"]
+
+    w = current_weight
+    h_m = profile["height_cm"] / 100.0
+    a = profile["age"]
+    gender = profile["gender"]
+    pal = profile["pal"]
+
+    if gender == "male":
+        bmr = (9.65 * w) + (573 * h_m) - (5.08 * a) + 260
+    else:
+        bmr = (10 * w) + (6.25 * profile["height_cm"]) - (5 * a) - 161
+
+    tdee = bmr * pal
+
+    today = datetime.date.today()
+    days_remaining = None
+    if target_date:
+        try:
+            target = datetime.date.fromisoformat(target_date)
+            days_remaining = (target - today).days
+        except (ValueError, TypeError):
+            pass
+
+    # Actual trend from 7-day MA regression
+    weights = [m["weight_kg"] for m in metrics if m["weight_kg"]]
+    actual_trend_kg_week = 0.0
+    if len(weights) >= 7:
+        ma = []
+        for i in range(len(weights)):
+            start = max(0, i - 6)
+            slice_vals = weights[start:i + 1]
+            ma.append(sum(slice_vals) / len(slice_vals))
+        n = min(30, len(ma))
+        x = list(range(n))
+        y = ma[-n:]
+        sum_x = sum(x)
+        sum_y = sum(y)
+        sum_xy = sum(xi * yi for xi, yi in zip(x, y))
+        sum_x2 = sum(xi * xi for xi in x)
+        denom = n * sum_x2 - sum_x * sum_x
+        if denom != 0:
+            slope = (n * sum_xy - sum_x * sum_y) / denom
+            actual_trend_kg_week = slope * 7
+
+    lines = ["⚖️ *Weight Math*"]
+    lines.append(f"Current: *{round(current_weight, 1)}* kg → Goal: *{round(goal, 1)}* kg")
+    lines.append(f"TDEE: *{round(tdee)}* kcal/day (BMR {round(bmr)}, PAL {pal})")
+
+    if days_remaining is not None and days_remaining > 0:
+        total_kg = current_weight - goal
+        total_deficit = total_kg * 7700 * 1.12
+        daily_deficit = total_deficit / days_remaining
+        eat_target = tdee - daily_deficit
+        required_trend = total_kg / (days_remaining / 7)
+
+        lines.append(f"Days left: *{days_remaining}*")
+        lines.append(f"Required: *{required_trend:.2f}* kg/week")
+        lines.append(f"Actual trend: *{actual_trend_kg_week:.2f}* kg/week")
+
+        gap = required_trend - actual_trend_kg_week
+        if gap > 0.05:
+            extra_kcal = gap * 7700 / 7
+            lines.append(f"🎯 Gap: +*{gap:.2f}* kg/week → burn *{round(extra_kcal)}* more kcal today")
+        elif gap < -0.05:
+            lines.append(f"✅ Ahead by *{abs(gap):.2f}* kg/week")
+        else:
+            lines.append("✅ On track")
+
+        if eat_target < 1200:
+            lines.append(f"⚠️ Eat target (*{round(eat_target)}* kcal) below safe minimum. Extend timeline.")
+        elif eat_target > 0:
+            lines.append(f"🍽️ Eat ~*{round(eat_target)}* kcal/day")
+    elif days_remaining is not None and days_remaining <= 0:
+        lines.append("⚠️ Target date has passed. Update with /target")
+    else:
+        lines.append("Set target date: /target 80 2026-08-01")
+
+    return "\n".join(lines)
+
+
 def fmt_report(today_rows, avg7) -> str:
     streak = db.get_streak()
     lines = []
@@ -474,6 +564,11 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             msg += f" (previous best: {previous_best})"
         await context.bot.send_message(chat_id=config.USER_ID, text=msg)
 
+    # Weight math nudge after workout
+    math_msg = compute_weight_math()
+    if math_msg:
+        await context.bot.send_message(chat_id=config.USER_ID, text=math_msg, parse_mode="Markdown")
+
     context.user_data.clear()
     return ConversationHandler.END
 
@@ -611,6 +706,11 @@ async def _log_weight(update: Update, context: ContextTypes.DEFAULT_TYPE, w: flo
             reply += f"\n{proj['message']}"
     await update.message.reply_text(reply)
 
+    # Append full calorie math if profile + target exist
+    math_msg = compute_weight_math()
+    if math_msg:
+        await update.message.reply_text(math_msg, parse_mode="Markdown")
+
     # Auto-export and push so GitHub Pages dashboard stays current
     try:
         import subprocess
@@ -653,6 +753,112 @@ async def goal_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
     except Exception as e:
         logger.error("Auto-export/push failed: %s", e)
+
+
+async def me_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _authorized(update):
+        return
+    text = update.message.text.replace("/me", "").strip()
+    if not text:
+        profile = db.get_profile()
+        if profile:
+            await update.message.reply_text(
+                f"Profile:\nHeight: {profile['height_cm']} cm\nAge: {profile['age']}\nGender: {profile['gender']}\nPAL: {profile['pal']}\n\nTo update: /me height 170 age 30 gender male"
+            )
+        else:
+            await update.message.reply_text("No profile. Set it: /me height 170 age 30 gender male")
+        return
+    # Parse loose key-value pairs
+    parts = text.lower().split()
+    data = {}
+    i = 0
+    while i < len(parts):
+        if parts[i] in ("height", "h") and i + 1 < len(parts):
+            data["height"] = parts[i + 1]
+            i += 2
+        elif parts[i] in ("age", "a") and i + 1 < len(parts):
+            data["age"] = parts[i + 1]
+            i += 2
+        elif parts[i] in ("gender", "g") and i + 1 < len(parts):
+            data["gender"] = parts[i + 1]
+            i += 2
+        elif parts[i] in ("pal", "p") and i + 1 < len(parts):
+            data["pal"] = parts[i + 1]
+            i += 2
+        else:
+            i += 1
+    if not data:
+        await update.message.reply_text("Usage: /me height 170 age 30 gender male")
+        return
+    profile = db.get_profile() or {}
+    try:
+        height = float(data.get("height", profile.get("height_cm", 170)))
+        age = int(data.get("age", profile.get("age", 30)))
+        gender = data.get("gender", profile.get("gender", "male"))
+        pal = float(data.get("pal", profile.get("pal", 1.4)))
+    except (ValueError, TypeError):
+        await update.message.reply_text("Invalid values. Example: /me height 170 age 30 gender male")
+        return
+    db.set_profile(height, age, gender, pal)
+    await update.message.reply_text(f"Profile saved: {height} cm, {age} yr, {gender}, PAL {pal}")
+
+
+async def target_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _authorized(update):
+        return
+    text = update.message.text.replace("/target", "").strip()
+    if not text:
+        current_goal = db.get_goal_weight()
+        current_target = db.get_target_date()
+        lines = []
+        if current_goal:
+            lines.append(f"Goal weight: {current_goal} kg")
+        if current_target:
+            lines.append(f"Target date: {current_target}")
+        if lines:
+            await update.message.reply_text("\n".join(lines) + "\n\nTo change: /target 80 2026-08-01")
+        else:
+            await update.message.reply_text("No target set. Use /target 80 2026-08-01")
+        return
+    parts = text.split()
+    if len(parts) < 2:
+        await update.message.reply_text("Usage: /target 80 2026-08-01")
+        return
+    try:
+        goal = float(parts[0])
+        target_date = parts[1]
+        # Validate date
+        datetime.date.fromisoformat(target_date)
+    except (ValueError, TypeError):
+        await update.message.reply_text("Usage: /target 80 2026-08-01")
+        return
+    db.set_goal_weight(goal)
+    db.set_target_date(target_date)
+    await update.message.reply_text(f"Target set: {goal} kg by {target_date}")
+    # Auto-export
+    try:
+        import subprocess
+        subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", f"Auto-export: target {goal} kg by {target_date}"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+    except Exception as e:
+        logger.error("Auto-export/push failed: %s", e)
+
+
+async def math_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _authorized(update):
+        return
+    msg = compute_weight_math()
+    if msg:
+        await update.message.reply_text(msg, parse_mode="Markdown")
+    else:
+        await update.message.reply_text(
+            "Need profile + goal + weight data.\n"
+            "1. /me height 170 age 30 gender male\n"
+            "2. /target 80 2026-08-01\n"
+            "3. Log weight with /weight"
+        )
 
 
 async def rest_day_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -752,6 +958,14 @@ async def weekly_alert(context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
+async def daily_weight_math_report(context: ContextTypes.DEFAULT_TYPE) -> None:
+    msg = compute_weight_math()
+    if msg:
+        await context.bot.send_message(
+            chat_id=config.USER_ID, text=msg, parse_mode="Markdown", reply_markup=DEFAULT_KEYBOARD
+        )
+
+
 async def daily_gmail_brief(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Run the standalone Gmail brief script. It handles its own
     noise filtering, deduplication, and Telegram sending."""
@@ -823,7 +1037,10 @@ def main() -> None:
     application.add_handler(CommandHandler("export", export_cmd))
     application.add_handler(CommandHandler("goal", goal_cmd))
     application.add_handler(CommandHandler("weight", weight_cmd))
-    application.add_handler(MessageHandler(filters.Regex("^(🛌 Rest Day)$"), rest_day_cmd))
+    application.add_handler(CommandHandler("me", me_cmd))
+    application.add_handler(CommandHandler("target", target_cmd))
+    application.add_handler(CommandHandler("math", math_cmd))
+    application.add_handler(MessageHandler(filters.Regex("^(\ud83d\udecc Rest Day)$"), rest_day_cmd))
     application.add_handler(weight_conv)
     application.add_handler(conv)
 
@@ -835,6 +1052,8 @@ def main() -> None:
     job_queue.run_daily(daily_gmail_brief, time=datetime.time(hour=9, minute=0))
     # Saturday 9:00 AM CDT (Mini local time)
     job_queue.run_daily(weekly_alert, time=datetime.time(hour=9, minute=0), days=(5,))
+    # Evening weight math — 8:00 PM CDT
+    job_queue.run_daily(daily_weight_math_report, time=datetime.time(hour=20, minute=0))
 
     application.run_polling(drop_pending_updates=True)
 
