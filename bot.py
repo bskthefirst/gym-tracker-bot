@@ -611,6 +611,16 @@ async def _log_weight(update: Update, context: ContextTypes.DEFAULT_TYPE, w: flo
             reply += f"\n{proj['message']}"
     await update.message.reply_text(reply)
 
+    # Auto-export and push so GitHub Pages dashboard stays current
+    try:
+        import subprocess
+        subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", f"Auto-export: weight {w} kg"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+    except Exception as e:
+        logger.error("Auto-export/push failed: %s", e)
+
 
 async def goal_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _authorized(update):
