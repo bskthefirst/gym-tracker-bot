@@ -105,6 +105,23 @@ def classify_email(e):
     return "other", "📧 Other"
 
 
+STATE_PATH = "/Users/billkim/gym-tracker/.gmail_brief_state.json"
+
+def _load_state():
+    try:
+        with open(STATE_PATH) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _save_state(state):
+    try:
+        with open(STATE_PATH, "w") as f:
+            json.dump(state, f)
+    except Exception as e:
+        print(f"[STATE ERROR] {e}")
+
+
 def brief():
     emails = fetch_emails()
     if not emails:
@@ -145,8 +162,21 @@ def brief():
         return
 
     msg = "\n".join(lines) + "\n\n" + "\n\n".join(sections)
+
+    # Deduplication: don't send identical content twice on the same day
+    state = _load_state()
+    today = datetime.now(CDT).strftime("%Y-%m-%d")
+    import hashlib
+    content_hash = hashlib.md5(msg.encode("utf-8")).hexdigest()
+    last_sent = state.get("last_sent_date")
+    last_hash = state.get("last_content_hash")
+    if last_sent == today and last_hash == content_hash:
+        print("[SKIP] Identical brief already sent today.")
+        return
+
     print(msg)
     send_telegram(msg)
+    _save_state({"last_sent_date": today, "last_content_hash": content_hash})
 
 
 if __name__ == "__main__":

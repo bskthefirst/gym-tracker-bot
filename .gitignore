@@ -4,3 +4,4 @@ __pycache__/
 *.db
 photos/
 *.log
+.gmail_brief_state.json
