@@ -81,15 +81,12 @@ def add_workout(
     photo_path: Optional[str] = None,
 ) -> int:
     d = datetime.date.fromisoformat(date)
-    adj_factor = 1.0
     with get_conn() as conn:
         row = conn.execute(
             "SELECT value FROM settings WHERE key = 'calorie_adjustment_factor'"
         ).fetchone()
-        if row:
-            adj_factor = float(row["value"])
-    adj_calories = round(calories * adj_factor, 1)
-    with get_conn() as conn:
+        adj_factor = float(row["value"]) if row else 1.0
+        adj_calories = round(calories * adj_factor, 1)
         cur = conn.execute(
             """
             INSERT INTO workouts

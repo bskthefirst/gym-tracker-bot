@@ -67,7 +67,6 @@ def _today() -> str:
 
 
 def fmt_report(today_rows, avg7) -> str:
-    today = db.get_today_summary()
     streak = db.get_streak()
     lines = []
     if streak > 1:
@@ -75,6 +74,8 @@ def fmt_report(today_rows, avg7) -> str:
     if db.is_rest_day(_today()):
         lines.append("🛌 *Rest Day*")
     lines.append("📋 *Today Total*")
+    total_cal = sum(w["calories"] or 0 for w in today_rows)
+    total_min = sum(w["duration_min"] or 0 for w in today_rows)
     if not today_rows:
         lines.append("No workouts logged yet.")
     else:
@@ -83,11 +84,11 @@ def fmt_report(today_rows, avg7) -> str:
             lines.append(f"  • {name} — {w['calories']} kcal ({round(w['duration_min'])} min)")
     lines.append("")
     lines.append("📊 *Dashboard Now*")
-    lines.append(f"  • Today calories burned: *{today['total_cal']}* kcal")
-    lines.append(f"  • Today workout time: *{round(today['total_min'])}* min")
+    lines.append(f"  • Today calories burned: *{round(total_cal, 1)}* kcal")
+    lines.append(f"  • Today workout time: *{round(total_min)}* min")
     lines.append(f"  • 7-day avg calories/day: *{avg7['avg_cal']}* kcal/day")
     lines.append(f"  • 7-day avg workout time/day: *{round(avg7['avg_min'])}* min/day")
-    need = round(config.DAILY_GOAL_KCAL - today["total_cal"], 1)
+    need = round(config.DAILY_GOAL_KCAL - total_cal, 1)
     if need > 0:
         lines.append(f"  • Need *{need}* more kcal to hit {config.DAILY_GOAL_KCAL}")
     else:
@@ -173,6 +174,12 @@ async def log_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not _authorized(update):
+        return ConversationHandler.END
+    # Guard: if already mid-workout log, don't restart
+    if "machine" in context.user_data:
+        await update.message.reply_text(
+            "You're already logging a workout. Finish or /cancel first."
+        )
         return ConversationHandler.END
     context.user_data.clear()
     photo = update.message.photo[-1]
@@ -278,14 +285,19 @@ async def duration_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 async def _ask_calories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     msg_obj = update.message or update.callback_query.message
-    ocr = context.user_data.get("ocr", {})
-    machine = context.user_data.get("machine", "")
+    d = context.user_data
+    if "duration_min" not in d:
+        await msg_obj.reply_text("Something went wrong. Start over with /log")
+        d.clear()
+        return ConversationHandler.END
+    ocr = d.get("ocr", {})
+    machine = d.get("machine", "")
     if ocr.get("calories"):
-        context.user_data["calories"] = ocr["calories"]
-        msg = f"Duration: {round(context.user_data['duration_min'])} min\nOCR calories: {ocr['calories']}\n\nReply with calories, or tap Skip to keep."
+        d["calories"] = ocr["calories"]
+        msg = f"Duration: {round(d['duration_min'])} min\nOCR calories: {ocr['calories']}\n\nReply with calories, or tap Skip to keep."
     elif machine in STRENGTH_CAL_RATES:
         rate = STRENGTH_CAL_RATES[machine]
-        est = round(context.user_data.get('duration_min', 0) * rate)
+        est = round(d['duration_min'] * rate)
         msg = f"Reply with calories, or tap Skip to auto-estimate (~{est} kcal):"
     else:
         msg = "Reply with calories shown on machine:"
@@ -324,10 +336,15 @@ async def calories_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 async def _ask_distance(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     msg_obj = update.message or update.callback_query.message
-    ocr = context.user_data.get("ocr", {})
+    d = context.user_data
+    if "calories" not in d:
+        await msg_obj.reply_text("Something went wrong. Start over with /log")
+        d.clear()
+        return ConversationHandler.END
+    ocr = d.get("ocr", {})
     if ocr.get("distance"):
-        context.user_data["distance"] = ocr["distance"]
-        msg = f"Calories: {context.user_data['calories']}\nOCR distance: {ocr['distance']} km\n\nReply with distance (km), or tap Skip to keep."
+        d["distance"] = ocr["distance"]
+        msg = f"Calories: {d['calories']}\nOCR distance: {ocr['distance']} km\n\nReply with distance (km), or tap Skip to keep."
     else:
         msg = "Reply with distance (km), or tap Skip if not applicable:"
     await msg_obj.reply_text(msg, reply_markup=SKIP_KEYBOARD)
@@ -364,6 +381,15 @@ async def distance_skip(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 async def _ask_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     d = context.user_data
+    required = ["machine", "duration_min", "calories"]
+    missing = [k for k in required if k not in d]
+    if missing:
+        msg_obj = update.message or update.callback_query.message
+        await msg_obj.reply_text(
+            f"Missing data ({', '.join(missing)}). Start over with /log"
+        )
+        d.clear()
+        return ConversationHandler.END
     summary = (
         f"Confirm log:\n"
         f"  • {d['machine']} ({d['workout_type']})\n"
@@ -557,6 +583,8 @@ async def weight_received(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await update.message.reply_text("Cancelled.")
         context.user_data.clear()
         return ConversationHandler.END
+    # Allow "/weight 86.1" as a reply, not just "86.1"
+    text = text.replace("/weight", "").strip()
     try:
         w = float(text)
     except ValueError:
@@ -587,7 +615,6 @@ async def _log_weight(update: Update, context: ContextTypes.DEFAULT_TYPE, w: flo
 async def goal_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _authorized(update):
         return
-    context.user_data.clear()
     text = update.message.text.replace("/goal", "").strip()
     if not text:
         current = db.get_goal_weight()
@@ -611,7 +638,6 @@ async def goal_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def rest_day_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _authorized(update):
         return
-    context.user_data.clear()
     today = _today()
     if db.is_rest_day(today):
         await update.message.reply_text(
@@ -629,7 +655,6 @@ async def rest_day_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def today_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _authorized(update):
         return
-    context.user_data.clear()
     today_rows = db.get_workouts_for_date(_today())
     avg7 = db.get_7day_avg()
     await update.message.reply_text(
@@ -640,7 +665,6 @@ async def today_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def week_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _authorized(update):
         return
-    context.user_data.clear()
     avg7 = db.get_7day_avg()
     recent = db.get_recent_workouts(7)
     lines = ["📅 *Last 7 Days*"]
@@ -746,15 +770,15 @@ def main() -> None:
         states={
             TYPE: [CallbackQueryHandler(type_selected)],
             DURATION: [
-                MessageHandler(filters.TEXT, duration_received),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, duration_received),
                 CallbackQueryHandler(duration_skip, pattern="^skip$"),
             ],
             CALORIES: [
-                MessageHandler(filters.TEXT, calories_received),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, calories_received),
                 CallbackQueryHandler(calories_skip, pattern="^skip$"),
             ],
             DISTANCE: [
-                MessageHandler(filters.TEXT, distance_received),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, distance_received),
                 CallbackQueryHandler(distance_skip, pattern="^skip$"),
             ],
             CONFIRM: [CallbackQueryHandler(confirm_handler)],
