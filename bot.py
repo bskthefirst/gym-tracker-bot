@@ -941,6 +941,7 @@ async def target_weight_start(update: Update, context: ContextTypes.DEFAULT_TYPE
         [InlineKeyboardButton("82", callback_data="tw_82"),
          InlineKeyboardButton("85", callback_data="tw_85"),
          InlineKeyboardButton("Type manually", callback_data="tw_manual")],
+        [InlineKeyboardButton("❌ Cancel", callback_data="tw_cancel")],
     ])
     await query.edit_message_text(f"{header}Pick goal weight (kg):", reply_markup=kb)
     return TARGET_WEIGHT
@@ -955,6 +956,10 @@ async def target_weight_received(update: Update, context: ContextTypes.DEFAULT_T
         if val == "manual":
             await query.edit_message_text("Send goal weight in kg (e.g. 80):")
             return TARGET_WEIGHT
+        if val == "cancel":
+            await query.edit_message_text("Cancelled.")
+            context.user_data.clear()
+            return ConversationHandler.END
         try:
             w = float(val)
         except ValueError:
@@ -992,6 +997,7 @@ async def _ask_target_date(query, context) -> int:
     buttons = [[InlineKeyboardButton(label, callback_data=f"td_{d.isoformat()}")]
                for d, label in dates]
     buttons.append([InlineKeyboardButton("Type manually", callback_data="td_manual")])
+    buttons.append([InlineKeyboardButton("❌ Cancel", callback_data="td_cancel")])
     await query.edit_message_text("Pick target date:", reply_markup=InlineKeyboardMarkup(buttons))
     return TARGET_DATE
 
@@ -1007,6 +1013,7 @@ async def _ask_target_date_msg(update: Update, context: ContextTypes.DEFAULT_TYP
     buttons = [[InlineKeyboardButton(label, callback_data=f"td_{d.isoformat()}")]
                for d, label in dates]
     buttons.append([InlineKeyboardButton("Type manually", callback_data="td_manual")])
+    buttons.append([InlineKeyboardButton("❌ Cancel", callback_data="td_cancel")])
     await update.message.reply_text("Pick target date:", reply_markup=InlineKeyboardMarkup(buttons))
     return TARGET_DATE
 
@@ -1020,6 +1027,10 @@ async def target_date_received(update: Update, context: ContextTypes.DEFAULT_TYP
         if val == "manual":
             await query.edit_message_text("Send target date (YYYY-MM-DD):")
             return TARGET_DATE
+        if val == "cancel":
+            await query.edit_message_text("Cancelled.")
+            context.user_data.clear()
+            return ConversationHandler.END
         target_date = val
     else:
         await query.edit_message_text("Send target date (YYYY-MM-DD):")
@@ -1096,6 +1107,7 @@ async def profile_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
          InlineKeyboardButton("175", callback_data="ph_175"),
          InlineKeyboardButton("180", callback_data="ph_180")],
         [InlineKeyboardButton("Type manually", callback_data="ph_manual")],
+        [InlineKeyboardButton("❌ Cancel", callback_data="ph_cancel")],
     ])
     await query.edit_message_text(f"{header}Pick height (cm):", reply_markup=kb)
     return PROFILE_HEIGHT
@@ -1110,6 +1122,10 @@ async def profile_height_received(update: Update, context: ContextTypes.DEFAULT_
         if val == "manual":
             await query.edit_message_text("Send height in cm:")
             return PROFILE_HEIGHT
+        if val == "cancel":
+            await query.edit_message_text("Cancelled.")
+            context.user_data.clear()
+            return ConversationHandler.END
         try:
             h = float(val)
         except ValueError:
@@ -1143,6 +1159,7 @@ async def _ask_profile_age(query, context) -> int:
          InlineKeyboardButton("35", callback_data="pa_35"),
          InlineKeyboardButton("40", callback_data="pa_40")],
         [InlineKeyboardButton("Type manually", callback_data="pa_manual")],
+        [InlineKeyboardButton("❌ Cancel", callback_data="pa_cancel")],
     ])
     await query.edit_message_text("Pick age:", reply_markup=kb)
     return PROFILE_AGE
@@ -1155,6 +1172,7 @@ async def _ask_profile_age_msg(update: Update, context: ContextTypes.DEFAULT_TYP
          InlineKeyboardButton("35", callback_data="pa_35"),
          InlineKeyboardButton("40", callback_data="pa_40")],
         [InlineKeyboardButton("Type manually", callback_data="pa_manual")],
+        [InlineKeyboardButton("❌ Cancel", callback_data="pa_cancel")],
     ])
     await update.message.reply_text("Pick age:", reply_markup=kb)
     return PROFILE_AGE
@@ -1169,6 +1187,10 @@ async def profile_age_received(update: Update, context: ContextTypes.DEFAULT_TYP
         if val == "manual":
             await query.edit_message_text("Send age in years:")
             return PROFILE_AGE
+        if val == "cancel":
+            await query.edit_message_text("Cancelled.")
+            context.user_data.clear()
+            return ConversationHandler.END
         try:
             a = int(val)
         except ValueError:
@@ -1199,6 +1221,7 @@ async def _ask_profile_gender(query, context) -> int:
     kb = InlineKeyboardMarkup([
         [InlineKeyboardButton("Male", callback_data="pg_male"),
          InlineKeyboardButton("Female", callback_data="pg_female")],
+        [InlineKeyboardButton("❌ Cancel", callback_data="pg_cancel")],
     ])
     await query.edit_message_text("Pick gender:", reply_markup=kb)
     return PROFILE_GENDER
@@ -1208,6 +1231,7 @@ async def _ask_profile_gender_msg(update: Update, context: ContextTypes.DEFAULT_
     kb = InlineKeyboardMarkup([
         [InlineKeyboardButton("Male", callback_data="pg_male"),
          InlineKeyboardButton("Female", callback_data="pg_female")],
+        [InlineKeyboardButton("❌ Cancel", callback_data="pg_cancel")],
     ])
     await update.message.reply_text("Pick gender:", reply_markup=kb)
     return PROFILE_GENDER
@@ -1221,6 +1245,10 @@ async def profile_gender_received(update: Update, context: ContextTypes.DEFAULT_
         g = "male"
     elif data == "pg_female":
         g = "female"
+    elif data == "pg_cancel":
+        await query.edit_message_text("Cancelled.")
+        context.user_data.clear()
+        return ConversationHandler.END
     else:
         await query.edit_message_text("Pick Male or Female:")
         return PROFILE_GENDER
@@ -1234,6 +1262,7 @@ async def _ask_profile_pal(query, context) -> int:
         [InlineKeyboardButton("Light 1.55", callback_data="pp_1.55")],
         [InlineKeyboardButton("Moderate 1.725", callback_data="pp_1.725")],
         [InlineKeyboardButton("Very Active 1.9", callback_data="pp_1.9")],
+        [InlineKeyboardButton("❌ Cancel", callback_data="pp_cancel")],
     ])
     await query.edit_message_text("Pick activity level:", reply_markup=kb)
     return PROFILE_PAL
@@ -1245,6 +1274,7 @@ async def _ask_profile_pal_msg(update: Update, context: ContextTypes.DEFAULT_TYP
         [InlineKeyboardButton("Light 1.55", callback_data="pp_1.55")],
         [InlineKeyboardButton("Moderate 1.725", callback_data="pp_1.725")],
         [InlineKeyboardButton("Very Active 1.9", callback_data="pp_1.9")],
+        [InlineKeyboardButton("❌ Cancel", callback_data="pp_cancel")],
     ])
     await update.message.reply_text("Pick activity level:", reply_markup=kb)
     return PROFILE_PAL
@@ -1255,6 +1285,10 @@ async def profile_pal_received(update: Update, context: ContextTypes.DEFAULT_TYP
     await query.answer()
     data = query.data
     if data.startswith("pp_"):
+        if data == "pp_cancel":
+            await query.edit_message_text("Cancelled.")
+            context.user_data.clear()
+            return ConversationHandler.END
         try:
             pal = float(data.replace("pp_", ""))
         except ValueError:
