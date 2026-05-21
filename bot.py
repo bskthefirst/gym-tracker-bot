@@ -196,53 +196,113 @@ def fmt_report(today_rows, avg7) -> str:
     return "\n".join(lines)
 
 
-def parse_ocr_text(text: str) -> dict:
+def _fix_dist(val: float, unit: str) -> float:
+    """Try to fix missing decimal point in distance readings from OCR."""
+    if val <= 50:
+        return val
+    s = str(int(val))
+    for i in range(1, len(s)):
+        try:
+            c = float(s[:i] + "." + s[i:])
+            if 0.1 <= c <= 20:
+                return c
+        except ValueError:
+            pass
+    return val
+
+
+def parse_ocr_text(text) -> dict:
+    """Parse OCR output from tesseract (str) or easyocr (list[str])."""
     result: dict = {"duration_min": None, "calories": None, "distance": None}
     if not text:
         return result
 
-    cal_patterns = [
-        r"(\d{1,4})\s*[Kk]?[Cc][Aa][Ll]",
-        r"[Cc][Aa][Ll][Oo][Rr][Ii][Ee][Ss]?\s*(\d{1,4})",
-        r"[Cc][Aa][Ll]\s*(\d{1,4})",
-    ]
-    for pat in cal_patterns:
-        m = re.search(pat, text)
-        if m:
-            val = int(m.group(1))
-            if 50 <= val <= 5000:
-                result["calories"] = val
-            break
+    if isinstance(text, str):
+        texts = text.splitlines()
+        full_text = text.lower()
+    else:
+        texts = text
+        full_text = " ".join(str(t) for t in texts).lower()
 
-    dur_patterns = [
-        r"(\d{1,2}):(\d{2}):(\d{2})",
-        r"(\d{1,2}):(\d{2})",
-    ]
-    for pat in dur_patterns:
-        m = re.search(pat, text)
+    # DURATION
+    m = re.search(r"time\s*(?:elapsed\s*)?(\d{1,2}):(\d{2})(?::(\d{2}))?", full_text)
+    if not m:
+        m = re.search(r"elapsed\s*(\d{1,2}):(\d{2})(?::(\d{2}))?", full_text)
+    if m:
+        groups = m.groups()
+        if groups[2]:
+            val = int(groups[0]) * 60 + int(groups[1]) + int(groups[2]) / 60
+        else:
+            val = int(groups[0]) + int(groups[1]) / 60
+        if 1 <= val <= 300:
+            result["duration_min"] = val
+
+    if not result["duration_min"]:
+        m = re.search(r"(\d{1,2}):(\d{2})", full_text)
         if m:
-            groups = m.groups()
-            if len(groups) == 3:
-                val = int(groups[0]) * 60 + int(groups[1]) + int(groups[2]) / 60
-            else:
-                val = int(groups[0]) + int(groups[1]) / 60
+            val = int(m.group(1)) + int(m.group(2)) / 60
             if 1 <= val <= 300:
                 result["duration_min"] = val
-            break
 
-    # Distance: look for km or mi; reject if > 50 (likely lost decimal point)
-    dist_patterns = [
-        r"(\d+\.?\d*)\s*[Kk][Mm]",
-        r"(\d+\.?\d*)\s*[Mm][Ii]",
-        r"[Dd][Ii][Ss][Tt][Aa][Nn][Cc][Ee]\s*(\d+\.?\d*)",
-    ]
-    for pat in dist_patterns:
-        m = re.search(pat, text)
+    # Smooshed 4-digit time after "time" label → MMSS
+    if not result["duration_min"]:
+        for i, t in enumerate(texts):
+            if re.search(r"time|elapsed", str(t), re.I):
+                for j in range(i + 1, min(i + 2, len(texts))):
+                    m = re.match(r"^(\d{3,4})$", str(texts[j]))
+                    if m:
+                        num = m.group(1)
+                        mm, ss = int(num[:2]), int(num[2:])
+                        if 0 <= mm <= 180 and 0 <= ss <= 59:
+                            val = mm + ss / 60
+                            if 1 <= val <= 300:
+                                result["duration_min"] = val
+                                break
+                if result["duration_min"]:
+                    break
+
+    # CALORIES — look for label then take next numeric item
+    for i, t in enumerate(texts):
+        if re.search(r"calories|cal\b", str(t), re.I):
+            for j in range(i + 1, min(len(texts), i + 3)):
+                m = re.search(r"(\d{2,4})", str(texts[j]))
+                if m:
+                    val = int(m.group(1))
+                    if 50 <= val <= 2000:
+                        result["calories"] = val
+                        break
+            if result["calories"]:
+                break
+
+    # DISTANCE — look for label then take next numeric item
+    for i, t in enumerate(texts):
+        if re.search(r"distance|dist\b", str(t), re.I):
+            for j in range(i + 1, min(len(texts), i + 3)):
+                item = str(texts[j])
+                m = re.search(r"(\d+\.\d+)", item)
+                if m:
+                    val = float(m.group(1))
+                    if 0.1 <= val <= 50:
+                        result["distance"] = val
+                        break
+                m = re.search(r"(\d+\.?\d*)(km|mi)", item, re.I)
+                if m:
+                    val = float(m.group(1))
+                    val = _fix_dist(val, m.group(2).lower())
+                    if 0.1 <= val <= 50:
+                        result["distance"] = val
+                        break
+            if result["distance"]:
+                break
+
+    # Fallback: any number+km/mi anywhere
+    if not result["distance"]:
+        m = re.search(r"(\d+\.?\d*)\s*(km|mi)", full_text)
         if m:
             val = float(m.group(1))
+            val = _fix_dist(val, m.group(2).lower())
             if 0.1 <= val <= 50:
                 result["distance"] = val
-            break
 
     return result
 
@@ -298,22 +358,28 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     ocr_result = {}
     try:
-        from llm_ocr import llm_ocr
-        ocr_result = llm_ocr(path) or {}
+        import easyocr
+        import numpy as np
+        from PIL import Image
+        reader = easyocr.Reader(["en"], gpu=False)
+        img = Image.open(path)
+        raw = reader.readtext(np.array(img))
+        texts = [r[1] for r in raw]
+        logger.info("EasyOCR texts: %s", texts)
+        ocr_result = parse_ocr_text(texts)
+        logger.info("EasyOCR parsed: %s", ocr_result)
     except Exception as e:
-        logger.info("LLM OCR skipped: %s", e)
+        logger.info("EasyOCR skipped: %s", e)
 
-    if not ocr_result:
+    if not any(ocr_result.values()):
         try:
             import pytesseract
             from PIL import Image
             pytesseract.pytesseract.tesseract_cmd = "/opt/homebrew/bin/tesseract"
             text = pytesseract.image_to_string(Image.open(path))
-            if len(text.strip()) < 10 or not re.search(r"\d", text):
-                logger.info("Tesseract OCR returned no usable text: %r", text)
-            else:
-                ocr_result = parse_ocr_text(text)
-                logger.info("Tesseract OCR text: %s | parsed: %s", text, ocr_result)
+            logger.info("Tesseract raw text: %r", text)
+            ocr_result = parse_ocr_text(text)
+            logger.info("Tesseract parsed: %s", ocr_result)
         except Exception as e:
             logger.info("Tesseract OCR skipped: %s", e)
 
