@@ -53,7 +53,7 @@ STRENGTH_CAL_RATES = {
 SKIP_KEYBOARD = InlineKeyboardMarkup([[InlineKeyboardButton("⏭️ Skip", callback_data="skip")]])
 
 DEFAULT_KEYBOARD = ReplyKeyboardMarkup(
-    [["Log Workout", "⚖️ Weight"], ["🛌 Rest Day"]], resize_keyboard=True, one_time_keyboard=False
+    [["Log Workout", "⚖️ Weight"], ["🛌 Rest Day", "⚙️ Settings"]], resize_keyboard=True, one_time_keyboard=False
 )
 
 
@@ -861,6 +861,428 @@ async def math_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
 
 
+# ---- Button-based Settings ----
+
+async def settings_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _authorized(update):
+        return
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📊 Weight Math", callback_data="math"),
+         InlineKeyboardButton("🎯 Set Target", callback_data="set_target")],
+        [InlineKeyboardButton("👤 Edit Profile", callback_data="set_profile")],
+    ])
+    await update.message.reply_text("What do you want to do?", reply_markup=kb)
+
+
+async def settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+    if data == "math":
+        msg = compute_weight_math()
+        if msg:
+            await query.edit_message_text(msg, parse_mode="Markdown")
+        else:
+            await query.edit_message_text(
+                "Need profile + goal + weight. Use \u2699\ufe0f Settings → Edit Profile / Set Target first."
+            )
+    elif data == "set_target":
+        await target_weight_start(update, context)
+    elif data == "set_profile":
+        await profile_start(update, context)
+
+
+# Target conversation (weight → date)
+TARGET_WEIGHT, TARGET_DATE = range(2)
+
+async def target_weight_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    goal = db.get_goal_weight()
+    target = db.get_target_date()
+    header = ""
+    if goal and target:
+        header = f"Current: {goal} kg by {target}\n"
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("75", callback_data="tw_75"),
+         InlineKeyboardButton("78", callback_data="tw_78"),
+         InlineKeyboardButton("80", callback_data="tw_80")],
+        [InlineKeyboardButton("82", callback_data="tw_82"),
+         InlineKeyboardButton("85", callback_data="tw_85"),
+         InlineKeyboardButton("Type manually", callback_data="tw_manual")],
+    ])
+    await query.edit_message_text(f"{header}Pick goal weight (kg):", reply_markup=kb)
+    return TARGET_WEIGHT
+
+
+async def target_weight_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+    if data.startswith("tw_"):
+        val = data.replace("tw_", "")
+        if val == "manual":
+            await query.edit_message_text("Send goal weight in kg (e.g. 80):")
+            return TARGET_WEIGHT
+        try:
+            w = float(val)
+        except ValueError:
+            await query.edit_message_text("Invalid. Send goal weight in kg:")
+            return TARGET_WEIGHT
+    else:
+        await query.edit_message_text("Send goal weight in kg:")
+        return TARGET_WEIGHT
+    context.user_data["_target_weight"] = w
+    return await _ask_target_date(query, context)
+
+
+async def target_weight_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    text = update.message.text.strip()
+    try:
+        w = float(text)
+    except ValueError:
+        await update.message.reply_text("Send a number for goal weight in kg:")
+        return TARGET_WEIGHT
+    if w <= 0:
+        await update.message.reply_text("Must be positive. Try again:")
+        return TARGET_WEIGHT
+    context.user_data["_target_weight"] = w
+    return await _ask_target_date_msg(update, context)
+
+
+async def _ask_target_date(query, context) -> int:
+    today = datetime.date.today()
+    dates = [
+        (today + datetime.timedelta(days=14), "2 weeks"),
+        (today + datetime.timedelta(days=30), "1 month"),
+        (today + datetime.timedelta(days=60), "2 months"),
+        (today + datetime.timedelta(days=90), "3 months"),
+    ]
+    buttons = [[InlineKeyboardButton(label, callback_data=f"td_{d.isoformat()}")]
+               for d, label in dates]
+    buttons.append([InlineKeyboardButton("Type manually", callback_data="td_manual")])
+    await query.edit_message_text("Pick target date:", reply_markup=InlineKeyboardMarkup(buttons))
+    return TARGET_DATE
+
+
+async def _ask_target_date_msg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    today = datetime.date.today()
+    dates = [
+        (today + datetime.timedelta(days=14), "2 weeks"),
+        (today + datetime.timedelta(days=30), "1 month"),
+        (today + datetime.timedelta(days=60), "2 months"),
+        (today + datetime.timedelta(days=90), "3 months"),
+    ]
+    buttons = [[InlineKeyboardButton(label, callback_data=f"td_{d.isoformat()}")]
+               for d, label in dates]
+    buttons.append([InlineKeyboardButton("Type manually", callback_data="td_manual")])
+    await update.message.reply_text("Pick target date:", reply_markup=InlineKeyboardMarkup(buttons))
+    return TARGET_DATE
+
+
+async def target_date_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+    if data.startswith("td_"):
+        val = data.replace("td_", "")
+        if val == "manual":
+            await query.edit_message_text("Send target date (YYYY-MM-DD):")
+            return TARGET_DATE
+        target_date = val
+    else:
+        await query.edit_message_text("Send target date (YYYY-MM-DD):")
+        return TARGET_DATE
+    return await _save_target(query, context, target_date)
+
+
+async def target_date_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    text = update.message.text.strip()
+    try:
+        datetime.date.fromisoformat(text)
+    except ValueError:
+        await update.message.reply_text("Invalid date. Send YYYY-MM-DD:")
+        return TARGET_DATE
+    return await _save_target_msg(update, context, text)
+
+
+async def _save_target(query, context, target_date: str) -> int:
+    w = context.user_data.get("_target_weight")
+    if w is None:
+        await query.edit_message_text("Something went wrong. Start over with ⚙️ Settings.")
+        context.user_data.clear()
+        return ConversationHandler.END
+    db.set_goal_weight(w)
+    db.set_target_date(target_date)
+    await query.edit_message_text(f"🎯 Target saved: {w} kg by {target_date}")
+    context.user_data.clear()
+    # Auto-export
+    try:
+        import subprocess
+        subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", f"Auto-export: target {w} kg by {target_date}"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+    except Exception as e:
+        logger.error("Auto-export/push failed: %s", e)
+    return ConversationHandler.END
+
+
+async def _save_target_msg(update: Update, context: ContextTypes.DEFAULT_TYPE, target_date: str) -> int:
+    w = context.user_data.get("_target_weight")
+    if w is None:
+        await update.message.reply_text("Something went wrong. Start over with ⚙️ Settings.")
+        context.user_data.clear()
+        return ConversationHandler.END
+    db.set_goal_weight(w)
+    db.set_target_date(target_date)
+    await update.message.reply_text(f"🎯 Target saved: {w} kg by {target_date}", reply_markup=DEFAULT_KEYBOARD)
+    context.user_data.clear()
+    try:
+        import subprocess
+        subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", f"Auto-export: target {w} kg by {target_date}"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+    except Exception as e:
+        logger.error("Auto-export/push failed: %s", e)
+    return ConversationHandler.END
+
+
+# Profile conversation (height → age → gender → PAL)
+PROFILE_HEIGHT, PROFILE_AGE, PROFILE_GENDER, PROFILE_PAL = range(4)
+
+async def profile_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    profile = db.get_profile()
+    header = ""
+    if profile:
+        header = f"Current: {profile['height_cm']} cm, {profile['age']} yr, {profile['gender']}, PAL {profile['pal']}\n"
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("160", callback_data="ph_160"),
+         InlineKeyboardButton("170", callback_data="ph_170"),
+         InlineKeyboardButton("175", callback_data="ph_175"),
+         InlineKeyboardButton("180", callback_data="ph_180")],
+        [InlineKeyboardButton("Type manually", callback_data="ph_manual")],
+    ])
+    await query.edit_message_text(f"{header}Pick height (cm):", reply_markup=kb)
+    return PROFILE_HEIGHT
+
+
+async def profile_height_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+    if data.startswith("ph_"):
+        val = data.replace("ph_", "")
+        if val == "manual":
+            await query.edit_message_text("Send height in cm:")
+            return PROFILE_HEIGHT
+        try:
+            h = float(val)
+        except ValueError:
+            await query.edit_message_text("Invalid. Send height in cm:")
+            return PROFILE_HEIGHT
+    else:
+        await query.edit_message_text("Send height in cm:")
+        return PROFILE_HEIGHT
+    context.user_data["_profile_height"] = h
+    return await _ask_profile_age(query, context)
+
+
+async def profile_height_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    text = update.message.text.strip()
+    try:
+        h = float(text)
+    except ValueError:
+        await update.message.reply_text("Send a number for height in cm:")
+        return PROFILE_HEIGHT
+    if h <= 0:
+        await update.message.reply_text("Must be positive. Try again:")
+        return PROFILE_HEIGHT
+    context.user_data["_profile_height"] = h
+    return await _ask_profile_age_msg(update, context)
+
+
+async def _ask_profile_age(query, context) -> int:
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("25", callback_data="pa_25"),
+         InlineKeyboardButton("30", callback_data="pa_30"),
+         InlineKeyboardButton("35", callback_data="pa_35"),
+         InlineKeyboardButton("40", callback_data="pa_40")],
+        [InlineKeyboardButton("Type manually", callback_data="pa_manual")],
+    ])
+    await query.edit_message_text("Pick age:", reply_markup=kb)
+    return PROFILE_AGE
+
+
+async def _ask_profile_age_msg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("25", callback_data="pa_25"),
+         InlineKeyboardButton("30", callback_data="pa_30"),
+         InlineKeyboardButton("35", callback_data="pa_35"),
+         InlineKeyboardButton("40", callback_data="pa_40")],
+        [InlineKeyboardButton("Type manually", callback_data="pa_manual")],
+    ])
+    await update.message.reply_text("Pick age:", reply_markup=kb)
+    return PROFILE_AGE
+
+
+async def profile_age_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+    if data.startswith("pa_"):
+        val = data.replace("pa_", "")
+        if val == "manual":
+            await query.edit_message_text("Send age in years:")
+            return PROFILE_AGE
+        try:
+            a = int(val)
+        except ValueError:
+            await query.edit_message_text("Invalid. Send age in years:")
+            return PROFILE_AGE
+    else:
+        await query.edit_message_text("Send age in years:")
+        return PROFILE_AGE
+    context.user_data["_profile_age"] = a
+    return await _ask_profile_gender(query, context)
+
+
+async def profile_age_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    text = update.message.text.strip()
+    try:
+        a = int(text)
+    except ValueError:
+        await update.message.reply_text("Send a whole number for age:")
+        return PROFILE_AGE
+    if a <= 0:
+        await update.message.reply_text("Must be positive. Try again:")
+        return PROFILE_AGE
+    context.user_data["_profile_age"] = a
+    return await _ask_profile_gender_msg(update, context)
+
+
+async def _ask_profile_gender(query, context) -> int:
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Male", callback_data="pg_male"),
+         InlineKeyboardButton("Female", callback_data="pg_female")],
+    ])
+    await query.edit_message_text("Pick gender:", reply_markup=kb)
+    return PROFILE_GENDER
+
+
+async def _ask_profile_gender_msg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Male", callback_data="pg_male"),
+         InlineKeyboardButton("Female", callback_data="pg_female")],
+    ])
+    await update.message.reply_text("Pick gender:", reply_markup=kb)
+    return PROFILE_GENDER
+
+
+async def profile_gender_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+    if data == "pg_male":
+        g = "male"
+    elif data == "pg_female":
+        g = "female"
+    else:
+        await query.edit_message_text("Pick Male or Female:")
+        return PROFILE_GENDER
+    context.user_data["_profile_gender"] = g
+    return await _ask_profile_pal(query, context)
+
+
+async def _ask_profile_pal(query, context) -> int:
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Desk Job 1.4", callback_data="pp_1.4")],
+        [InlineKeyboardButton("Light 1.55", callback_data="pp_1.55")],
+        [InlineKeyboardButton("Moderate 1.725", callback_data="pp_1.725")],
+        [InlineKeyboardButton("Very Active 1.9", callback_data="pp_1.9")],
+    ])
+    await query.edit_message_text("Pick activity level:", reply_markup=kb)
+    return PROFILE_PAL
+
+
+async def _ask_profile_pal_msg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Desk Job 1.4", callback_data="pp_1.4")],
+        [InlineKeyboardButton("Light 1.55", callback_data="pp_1.55")],
+        [InlineKeyboardButton("Moderate 1.725", callback_data="pp_1.725")],
+        [InlineKeyboardButton("Very Active 1.9", callback_data="pp_1.9")],
+    ])
+    await update.message.reply_text("Pick activity level:", reply_markup=kb)
+    return PROFILE_PAL
+
+
+async def profile_pal_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+    if data.startswith("pp_"):
+        try:
+            pal = float(data.replace("pp_", ""))
+        except ValueError:
+            await query.edit_message_text("Pick an activity level:")
+            return PROFILE_PAL
+    else:
+        await query.edit_message_text("Pick an activity level:")
+        return PROFILE_PAL
+    return await _save_profile(query, context, pal)
+
+
+async def profile_pal_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    text = update.message.text.strip()
+    try:
+        pal = float(text)
+    except ValueError:
+        await update.message.reply_text("Send a number for PAL (e.g. 1.4):")
+        return PROFILE_PAL
+    if pal < 1.0 or pal > 2.5:
+        await update.message.reply_text("PAL should be 1.0–2.5. Try again:")
+        return PROFILE_PAL
+    return await _save_profile_msg(update, context, pal)
+
+
+async def _save_profile(query, context, pal: float) -> int:
+    d = context.user_data
+    height = d.get("_profile_height")
+    age = d.get("_profile_age")
+    gender = d.get("_profile_gender")
+    if None in (height, age, gender):
+        await query.edit_message_text("Something went wrong. Start over with ⚙️ Settings.")
+        context.user_data.clear()
+        return ConversationHandler.END
+    db.set_profile(height, age, gender, pal)
+    await query.edit_message_text(
+        f"👤 Profile saved: {height} cm, {age} yr, {gender}, PAL {pal}"
+    )
+    context.user_data.clear()
+    return ConversationHandler.END
+
+
+async def _save_profile_msg(update: Update, context: ContextTypes.DEFAULT_TYPE, pal: float) -> int:
+    d = context.user_data
+    height = d.get("_profile_height")
+    age = d.get("_profile_age")
+    gender = d.get("_profile_gender")
+    if None in (height, age, gender):
+        await update.message.reply_text("Something went wrong. Start over with ⚙️ Settings.")
+        context.user_data.clear()
+        return ConversationHandler.END
+    db.set_profile(height, age, gender, pal)
+    await update.message.reply_text(
+        f"👤 Profile saved: {height} cm, {age} yr, {gender}, PAL {pal}",
+        reply_markup=DEFAULT_KEYBOARD,
+    )
+    context.user_data.clear()
+    return ConversationHandler.END
+
+
 async def rest_day_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _authorized(update):
         return
@@ -1040,7 +1462,51 @@ def main() -> None:
     application.add_handler(CommandHandler("me", me_cmd))
     application.add_handler(CommandHandler("target", target_cmd))
     application.add_handler(CommandHandler("math", math_cmd))
-    application.add_handler(MessageHandler(filters.Regex("^(\ud83d\udecc Rest Day)$"), rest_day_cmd))
+    application.add_handler(MessageHandler(filters.Regex("^(🛌 Rest Day)$"), rest_day_cmd))
+    application.add_handler(MessageHandler(filters.Regex("^(⚙️ Settings)$"), settings_cmd))
+
+    # Settings conversations
+    settings_conv = ConversationHandler(
+        entry_points=[CallbackQueryHandler(target_weight_start, pattern="^set_target$")],
+        states={
+            TARGET_WEIGHT: [
+                CallbackQueryHandler(target_weight_received, pattern="^tw_"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, target_weight_text),
+            ],
+            TARGET_DATE: [
+                CallbackQueryHandler(target_date_received, pattern="^td_"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, target_date_text),
+            ],
+        },
+        fallbacks=[CommandHandler("cancel", cancel)],
+    )
+
+    profile_conv = ConversationHandler(
+        entry_points=[CallbackQueryHandler(profile_start, pattern="^set_profile$")],
+        states={
+            PROFILE_HEIGHT: [
+                CallbackQueryHandler(profile_height_received, pattern="^ph_"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, profile_height_text),
+            ],
+            PROFILE_AGE: [
+                CallbackQueryHandler(profile_age_received, pattern="^pa_"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, profile_age_text),
+            ],
+            PROFILE_GENDER: [
+                CallbackQueryHandler(profile_gender_received, pattern="^pg_"),
+            ],
+            PROFILE_PAL: [
+                CallbackQueryHandler(profile_pal_received, pattern="^pp_"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, profile_pal_text),
+            ],
+        },
+        fallbacks=[CommandHandler("cancel", cancel)],
+    )
+
+    # Main menu callback (math button only — set_target/set_profile are conversation entry points)
+    application.add_handler(CallbackQueryHandler(settings_callback, pattern="^math$"))
+    application.add_handler(settings_conv)
+    application.add_handler(profile_conv)
     application.add_handler(weight_conv)
     application.add_handler(conv)
 
