@@ -1519,7 +1519,7 @@ def main() -> None:
     # Saturday 9:00 AM CDT (Mini local time)
     job_queue.run_daily(weekly_alert, time=datetime.time(hour=9, minute=0), days=(5,))
     # Evening weight math — 8:00 PM CDT
-    job_queue.run_daily(daily_weight_math_report, time=datetime.time(hour=20, minute=0))
+    job_queue.run_daily(daily_weight_math_report, time=datetime.time(hour=8, minute=0))
 
     application.run_polling(drop_pending_updates=True)
 
