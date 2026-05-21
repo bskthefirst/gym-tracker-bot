@@ -24,7 +24,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Conversation states
-PHOTO, TYPE, DURATION, CALORIES, DISTANCE, CONFIRM = range(6)
+PHOTO, TYPE, DURATION, CALORIES, DISTANCE, CONFIRM, WAITING_WEIGHT = range(7)
 
 MACHINE_OPTIONS = [
     ["Stair Master", "Incline Treadmill"],
@@ -529,9 +529,6 @@ async def weight_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     # Cancel any active conversation
     context.user_data.clear()
     text = update.message.text.replace("/weight", "").strip()
-    if text == "⚖️ Weight":
-        await update.message.reply_text("Send your weight in kg (e.g., 87.5):")
-        return
     if not text:
         await update.message.reply_text("Usage: /weight 87.5")
         return
@@ -543,8 +540,39 @@ async def weight_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     if w <= 0:
         await update.message.reply_text("Weight must be positive.")
         return
+    await _log_weight(update, context, w)
+
+
+async def weight_button_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if not _authorized(update):
+        return ConversationHandler.END
+    context.user_data.clear()
+    await update.message.reply_text("Send your weight in kg (e.g., 87.5):")
+    return WAITING_WEIGHT
+
+
+async def weight_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    text = update.message.text.strip()
+    if text == "/cancel":
+        await update.message.reply_text("Cancelled.")
+        context.user_data.clear()
+        return ConversationHandler.END
+    try:
+        w = float(text)
+    except ValueError:
+        await update.message.reply_text("Send a number for weight in kg, or /cancel:")
+        return WAITING_WEIGHT
+    if w <= 0:
+        await update.message.reply_text("Weight must be positive. Try again or /cancel:")
+        return WAITING_WEIGHT
+    await _log_weight(update, context, w)
+    context.user_data.clear()
+    return ConversationHandler.END
+
+
+async def _log_weight(update: Update, context: ContextTypes.DEFAULT_TYPE, w: float) -> None:
     db.add_body_metric(_today(), weight_kg=w)
-    reply = f"Logged weight: {w} kg"
+    reply = f"✅ Logged weight: {w} kg"
     proj = db.weight_projection()
     if proj:
         reply += f"\n📊 7-day avg: {proj['current_ma']} kg"
@@ -734,6 +762,16 @@ def main() -> None:
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
+    weight_conv = ConversationHandler(
+        entry_points=[
+            MessageHandler(filters.Regex("^(⚖️ Weight)$"), weight_button_start),
+        ],
+        states={
+            WAITING_WEIGHT: [MessageHandler(filters.TEXT, weight_received)],
+        },
+        fallbacks=[CommandHandler("cancel", cancel)],
+    )
+
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("today", today_cmd))
     application.add_handler(CommandHandler("week", week_cmd))
@@ -742,7 +780,7 @@ def main() -> None:
     application.add_handler(CommandHandler("goal", goal_cmd))
     application.add_handler(CommandHandler("weight", weight_cmd))
     application.add_handler(MessageHandler(filters.Regex("^(🛌 Rest Day)$"), rest_day_cmd))
-    application.add_handler(MessageHandler(filters.Regex("^(⚖️ Weight)$"), weight_cmd))
+    application.add_handler(weight_conv)
     application.add_handler(conv)
 
     job_queue = application.job_queue
