@@ -85,7 +85,7 @@ def add_workout(
         row = conn.execute(
             "SELECT value FROM settings WHERE key = 'calorie_adjustment_factor'"
         ).fetchone()
-        adj_factor = float(row["value"]) if row else 1.0
+        adj_factor = float(row["value"] or "1.0") if row else 1.0
         adj_calories = round(calories * adj_factor, 1)
         cur = conn.execute(
             """

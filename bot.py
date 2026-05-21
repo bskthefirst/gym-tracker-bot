@@ -601,12 +601,20 @@ async def export_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         await update.message.reply_text("❌ openpyxl not installed.")
         return
 
-    xlsx_path = "/Users/billkim/.hermes/profiles/berthier/cache/documents/doc_d65413c65ba1_workout_tracker_tuesday_treadmill_309_corrected_dashboard.xlsx"
+    xlsx_path = "/Users/billkim/gym-tracker/workout_tracker.xlsx"
+    wb = None
     try:
         wb = openpyxl.load_workbook(xlsx_path)
-    except Exception as e:
-        await update.message.reply_text(f"❌ Cannot load xlsx: {e}")
-        return
+    except Exception:
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Workout Log"
+        headers = ["Date", "Day", "Type", "Machine", "Duration (min)", "Calories", "Adjusted Calories",
+                   "Level", "Distance", "Floors/Steps", "Weight/Load", "Sets/Reps", "Notes", "Week Start", "Month"]
+        for col, header in enumerate(headers, 1):
+            ws.cell(row=1, column=col, value=header)
+        wb.save(xlsx_path)
+        wb = openpyxl.load_workbook(xlsx_path)
     ws = wb["Workout Log"]
 
     row = 2
@@ -809,8 +817,21 @@ async def me_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     except (ValueError, TypeError):
         await update.message.reply_text("Invalid values. Example: /me height 170 age 30 gender male")
         return
+    if height <= 0 or age <= 0 or pal < 1.0 or pal > 2.5:
+        await update.message.reply_text("Invalid range: height/age must be positive, PAL 1.0–2.5.")
+        return
     db.set_profile(height, age, gender, pal)
     await update.message.reply_text(f"Profile saved: {height} cm, {age} yr, {gender}, PAL {pal}")
+
+    # Auto-export so dashboard reflects profile changes
+    try:
+        import subprocess
+        subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", f"Auto-export: profile update"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+    except Exception as e:
+        logger.error("Auto-export/push failed: %s", e)
 
 
 async def target_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1272,6 +1293,15 @@ async def _save_profile(query, context, pal: float) -> int:
         f"👤 Profile saved: {height} cm, {age} yr, {gender}, PAL {pal}"
     )
     context.user_data.clear()
+    # Auto-export
+    try:
+        import subprocess
+        subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", "Auto-export: profile update"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+    except Exception as e:
+        logger.error("Auto-export/push failed: %s", e)
     return ConversationHandler.END
 
 
@@ -1290,6 +1320,15 @@ async def _save_profile_msg(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         reply_markup=DEFAULT_KEYBOARD,
     )
     context.user_data.clear()
+    # Auto-export
+    try:
+        import subprocess
+        subprocess.run(["python3", "export_json.py"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "add", "docs/data/workouts.json"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", "Auto-export: profile update"], cwd="/Users/billkim/gym-tracker", check=False, capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd="/Users/billkim/gym-tracker", check=True, capture_output=True)
+    except Exception as e:
+        logger.error("Auto-export/push failed: %s", e)
     return ConversationHandler.END
 
 
@@ -1528,7 +1567,7 @@ def main() -> None:
     job_queue.run_daily(daily_gmail_brief, time=datetime.time(hour=9, minute=0))
     # Saturday 9:00 AM CDT (Mini local time)
     job_queue.run_daily(weekly_alert, time=datetime.time(hour=9, minute=0), days=(5,))
-    # Evening weight math — 8:00 PM CDT
+    # Morning weight math — 8:00 AM CDT
     job_queue.run_daily(daily_weight_math_report, time=datetime.time(hour=8, minute=0))
 
     application.run_polling(drop_pending_updates=True)
