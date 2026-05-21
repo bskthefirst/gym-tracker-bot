@@ -131,23 +131,33 @@ def compute_weight_math() -> Optional[str]:
         eat_target = tdee - daily_deficit
         required_trend = total_kg / (days_remaining / 7)
 
-        lines.append(f"Days left: *{days_remaining}*")
-        lines.append(f"Required: *{required_trend:.2f}* kg/week")
-        lines.append(f"Actual trend: *{actual_trend_kg_week:.2f}* kg/week")
+        lines.append(f"Days left: *{days_remaining}* (target: {target_date})")
+        lines.append(f"Required rate: *{required_trend:.2f}* kg/week")
 
-        gap = required_trend - actual_trend_kg_week
-        if gap > 0.05:
-            extra_kcal = gap * 7700 / 7
-            lines.append(f"🎯 Gap: +*{gap:.2f}* kg/week → burn *{round(extra_kcal)}* more kcal today")
-        elif gap < -0.05:
-            lines.append(f"✅ Ahead by *{abs(gap):.2f}* kg/week")
-        else:
-            lines.append("✅ On track")
+        # Primary: exercise burn target (assuming eating at TDEE)
+        lines.append(f"")
+        lines.append(f"🔥 *Exercise target: {round(daily_deficit)} kcal/day*")
+        lines.append(f"   (if eating ~{round(tdee)} kcal/day)")
+
+        if eat_target > 0:
+            lines.append(f"🍽️ OR eat ~*{round(eat_target)}* kcal/day")
+            lines.append(f"   (with your current exercise)")
+
+        # Trend gap analysis (only meaningful with 2+ data points)
+        if len(weights) >= 2:
+            lines.append(f"")
+            lines.append(f"Actual trend: *{actual_trend_kg_week:.2f}* kg/week")
+            gap = required_trend - actual_trend_kg_week
+            if gap > 0.05:
+                extra_kcal = gap * 7700 / 7
+                lines.append(f"🎯 Gap: +*{gap:.2f}* kg/week → burn *{round(extra_kcal)}* more kcal today")
+            elif gap < -0.05:
+                lines.append(f"✅ Ahead by *{abs(gap):.2f}* kg/week")
+            else:
+                lines.append("✅ On track")
 
         if eat_target < 1200:
             lines.append(f"⚠️ Eat target (*{round(eat_target)}* kcal) below safe minimum. Extend timeline.")
-        elif eat_target > 0:
-            lines.append(f"🍽️ Eat ~*{round(eat_target)}* kcal/day")
     elif days_remaining is not None and days_remaining <= 0:
         lines.append("⚠️ Target date has passed. Update with /target")
     else:
