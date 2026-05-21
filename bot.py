@@ -27,27 +27,27 @@ logger = logging.getLogger(__name__)
 PHOTO, TYPE, DURATION, CALORIES, DISTANCE, CONFIRM, WAITING_WEIGHT = range(7)
 
 MACHINE_OPTIONS = [
-    ["Stair Master", "Incline Treadmill"],
-    ["Indoor Cycling", "Bicep-Tricep Curl"],
-    ["Leg", "Strength- Others"],
+    ["🪜 Stair Master", "🏔️ Incline Treadmill"],
+    ["🚲 Indoor Cycling", "💪 Bicep-Tricep Curl"],
+    ["🦵 Leg", "🏋️ Strength- Others"],
 ]
 
 TYPE_MAP = {
-    "Stair Master": "Cardio",
-    "Incline Treadmill": "Cardio",
-    "Indoor Cycling": "Cardio",
-    "Bicep-Tricep Curl": "Strength",
-    "Leg": "Strength",
-    "Strength- Others": "Strength",
+    "🪜 Stair Master": "Cardio",
+    "🏔️ Incline Treadmill": "Cardio",
+    "🚲 Indoor Cycling": "Cardio",
+    "💪 Bicep-Tricep Curl": "Strength",
+    "🦵 Leg": "Strength",
+    "🏋️ Strength- Others": "Strength",
 }
 
 # kcal/min estimate for strength machines when user skips calorie entry
 # Sources: Reis et al. 2017 (PLoS One), Adeel et al. 2021 (Appl. Sci.),
 # StrongerByScience review of João et al. 2022.
 STRENGTH_CAL_RATES = {
-    "Bicep-Tricep Curl": 3.5,   # upper isolation, moderate intensity: 2.7–3.9 kcal/min
-    "Leg": 6.0,                 # lower machine (leg press): 5.0–7.3 kcal/min
-    "Strength- Others": 5.5,    # compound mixed: 5.5–6.0 kcal/min
+    "💪 Bicep-Tricep Curl": 3.5,   # upper isolation, moderate intensity: 2.7–3.9 kcal/min
+    "🦵 Leg": 6.0,                 # lower machine (leg press): 5.0–7.3 kcal/min
+    "🏋️ Strength- Others": 5.5,    # compound mixed: 5.5–6.0 kcal/min
 }
 
 SKIP_KEYBOARD = InlineKeyboardMarkup([[InlineKeyboardButton("⏭️ Skip", callback_data="skip")]])
