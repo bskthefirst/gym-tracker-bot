@@ -179,7 +179,8 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     try:
         file = await photo.get_file()
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        ext = os.path.splitext(file.file_path)[1] or ".jpg"
+        fp = file.file_path or ""
+        ext = os.path.splitext(fp)[1] or ".jpg"
         path = os.path.join(config.PHOTO_DIR, f"workout_{ts}{ext}")
         await file.download_to_drive(path)
     except Exception as e:
@@ -462,11 +463,19 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def export_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _authorized(update):
         return
-    import openpyxl
-    from openpyxl.utils import get_column_letter
+    try:
+        import openpyxl
+        from openpyxl.utils import get_column_letter
+    except ImportError:
+        await update.message.reply_text("❌ openpyxl not installed.")
+        return
 
     xlsx_path = "/Users/billkim/.hermes/profiles/berthier/cache/documents/doc_d65413c65ba1_workout_tracker_tuesday_treadmill_309_corrected_dashboard.xlsx"
-    wb = openpyxl.load_workbook(xlsx_path)
+    try:
+        wb = openpyxl.load_workbook(xlsx_path)
+    except Exception as e:
+        await update.message.reply_text(f"❌ Cannot load xlsx: {e}")
+        return
     ws = wb["Workout Log"]
 
     row = 2
@@ -494,7 +503,7 @@ async def export_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         ws.cell(row=row, column=4, value=w["machine"])
         ws.cell(row=row, column=5, value=w["duration_min"])
         ws.cell(row=row, column=6, value=w["calories"])
-        ws.cell(row=row, column=7, value=f"=IF(F{row}=\"\",\"\",F{row}*Settings!$B$3)")
+        ws.cell(row=row, column=7, value=f"=IF(F{row}=\"\",\"\",F{row}*Settings!\$B\$3)")
         ws.cell(row=row, column=8, value=w["level"])
         ws.cell(row=row, column=9, value=w["distance"])
         ws.cell(row=row, column=10, value=w["floors_steps"])
@@ -506,7 +515,11 @@ async def export_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         row += 1
         added += 1
 
-    wb.save(xlsx_path)
+    try:
+        wb.save(xlsx_path)
+    except Exception as e:
+        await update.message.reply_text(f"❌ Failed to save xlsx: {e}")
+        return
     await update.message.reply_text(f"Exported {added} new workouts to xlsx.")
 
 
@@ -537,11 +550,8 @@ async def weight_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         reply += f"\n📊 7-day avg: {proj['current_ma']} kg"
         reply += f"\n📉 Trend: {proj['slope_kg_week']:+} kg/week"
         if proj['weeks_to_goal'] is not None:
-            if proj['weeks_to_goal'] > 0:
-                reply += f"\n🎯 Goal {proj['goal']} kg: ~{proj['weeks_to_goal']} weeks"
-            else:
-                reply += f"\n🎯 Goal {proj['goal']} kg: already there or passed"
-        elif proj['message']:
+            reply += f"\n🎯 Goal {proj['goal']} kg: ~{proj['weeks_to_goal']} weeks"
+        if proj['message']:
             reply += f"\n{proj['message']}"
     await update.message.reply_text(reply)
 

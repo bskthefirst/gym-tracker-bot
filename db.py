@@ -179,7 +179,7 @@ def _moving_average(values: List[float], window: int = 7) -> List[float]:
 
 def weight_projection() -> Optional[Dict[str, Any]]:
     """Compute 7-day MA, linear regression slope, and ETA to goal.
-    Returns dict with current_ma, slope_kg_week, weeks_to_goal, goal,
+    Returns dict with current_ma, slope_kg_week, weeks_to_goal, goal, message,
     or None if insufficient data.
     """
     rows = get_body_metrics()
@@ -189,7 +189,6 @@ def weight_projection() -> Optional[Dict[str, Any]]:
     if goal is None:
         return None
 
-    dates = [r["date"] for r in rows]
     weights = [r["weight_kg"] for r in rows]
     ma = _moving_average(weights, window=7)
 
@@ -212,6 +211,7 @@ def weight_projection() -> Optional[Dict[str, Any]]:
 
     current_ma = ma[-1]
     delta = current_ma - goal
+
     if abs(slope_kg_week) < 0.05:  # less than 50g/week = essentially flat
         return {
             "current_ma": round(current_ma, 1),
@@ -220,14 +220,36 @@ def weight_projection() -> Optional[Dict[str, Any]]:
             "goal": round(goal, 1),
             "message": "Weight trend is flat. No ETA available.",
         }
-    weeks_to_goal = delta / slope_kg_week
-    return {
-        "current_ma": round(current_ma, 1),
-        "slope_kg_week": round(slope_kg_week, 2),
-        "weeks_to_goal": round(weeks_to_goal, 1),
-        "goal": round(goal, 1),
-        "message": None,
-    }
+
+    at_goal = abs(delta) < 0.5
+    moving_toward = (delta > 0 and slope_kg_week < 0) or (delta < 0 and slope_kg_week > 0)
+
+    if at_goal:
+        return {
+            "current_ma": round(current_ma, 1),
+            "slope_kg_week": round(slope_kg_week, 2),
+            "weeks_to_goal": None,
+            "goal": round(goal, 1),
+            "message": f"At goal weight ({goal} kg).",
+        }
+    elif moving_toward:
+        weeks_to_goal = abs(delta) / abs(slope_kg_week)
+        return {
+            "current_ma": round(current_ma, 1),
+            "slope_kg_week": round(slope_kg_week, 2),
+            "weeks_to_goal": round(weeks_to_goal, 1),
+            "goal": round(goal, 1),
+            "message": None,
+        }
+    else:
+        direction = "gaining" if slope_kg_week > 0 else "losing"
+        return {
+            "current_ma": round(current_ma, 1),
+            "slope_kg_week": round(slope_kg_week, 2),
+            "weeks_to_goal": None,
+            "goal": round(goal, 1),
+            "message": f"Currently {direction} {abs(slope_kg_week):.2f} kg/week — away from goal.",
+        }
 
 
 def get_7day_avg(date: Optional[str] = None) -> Dict[str, Any]:

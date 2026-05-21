@@ -450,17 +450,20 @@
                 let etaText = '';
                 if (goal !== null) {
                     const delta = currentMA - goal;
-                    if (Math.abs(slopeKgWeek) < 0.05) {
+                    const atGoal = Math.abs(delta) < 0.5;
+                    const movingToward = (delta > 0 && slopeKgWeek < 0) || (delta < 0 && slopeKgWeek > 0);
+                    if (atGoal) {
+                        etaText = `Goal ${goal} kg — at target`;
+                    } else if (Math.abs(slopeKgWeek) < 0.05) {
                         etaText = `Goal ${goal} kg — trend flat`;
+                    } else if (movingToward) {
+                        const weeks = Math.abs(delta) / Math.abs(slopeKgWeek);
+                        const d = new Date();
+                        d.setDate(d.getDate() + weeks * 7);
+                        etaText = `Goal ${goal} kg — ~${weeks.toFixed(1)} weeks (${d.toLocaleDateString('en-US', {month:'short', day:'numeric'})})`;
                     } else {
-                        const weeks = delta / slopeKgWeek;
-                        if (weeks > 0) {
-                            const d = new Date();
-                            d.setDate(d.getDate() + weeks * 7);
-                            etaText = `Goal ${goal} kg — ~${weeks.toFixed(1)} weeks (${d.toLocaleDateString('en-US', {month:'short', day:'numeric'})})`;
-                        } else {
-                            etaText = `Goal ${goal} kg — reached or passed`;
-                        }
+                        const direction = slopeKgWeek > 0 ? 'gaining' : 'losing';
+                        etaText = `Goal ${goal} kg — currently ${direction}, away from target`;
                     }
                 }
                 const arrow = slopeKgWeek < 0 ? '▼' : slopeKgWeek > 0 ? '▲' : '—';

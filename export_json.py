@@ -64,7 +64,7 @@ def export():
             prs[m] = c
 
     payload = {
-        "exported_at": datetime.datetime.utcnow().isoformat() + "Z",
+        "exported_at": datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat() + "Z",
         "workouts": workouts,
         "body_metrics": body_metrics,
         "settings": settings,
