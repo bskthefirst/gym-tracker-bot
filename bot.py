@@ -211,11 +211,107 @@ def _fix_dist(val: float, unit: str) -> float:
     return val
 
 
-def parse_ocr_text(text) -> dict:
-    """Parse OCR output from tesseract (str) or easyocr (list[str])."""
+def _center(bbox):
+    xs = [p[0] for p in bbox]
+    ys = [p[1] for p in bbox]
+    return sum(xs) / len(xs), sum(ys) / len(ys)
+
+
+def _parse_spatial(raw, img_size):
+    result = {"duration_min": None, "calories": None, "distance": None}
+    if not raw or not img_size:
+        return result
+    width, _ = img_size
+    threshold_x = width * 0.12
+
+    items = []
+    for r in raw:
+        bbox, text, conf = r
+        cx, cy = _center(bbox)
+        items.append({"text": str(text), "cx": cx, "cy": cy, "conf": conf})
+
+    labels = []
+    for it in items:
+        t = it["text"].lower()
+        if re.search(r"calories|cal\b", t):
+            labels.append(("calories", it))
+        elif re.search(r"distance|dist\b", t):
+            labels.append(("distance", it))
+        elif re.search(r"time.*elapsed|elapsed.*time|time\b", t):
+            labels.append(("time", it))
+
+    values = []
+    for it in items:
+        t = it["text"]
+        # Time with colon
+        m = re.match(r"^(\d{1,2}):(\d{2})$", t)
+        if m:
+            val = int(m.group(1)) + int(m.group(2)) / 60
+            if 1 <= val <= 300:
+                values.append(("time", val, it))
+        # Smooshed time 3-4 digits
+        m = re.match(r"^(\d{3,4})$", t)
+        if m:
+            num = m.group(1)
+            mm, ss = int(num[:2]), int(num[2:])
+            if 0 <= mm <= 180 and 0 <= ss <= 59:
+                val = mm + ss / 60
+                if 1 <= val <= 300:
+                    values.append(("time", val, it))
+        # Pure integer (calories or distance)
+        m = re.match(r"^(\d+)$", t)
+        if m:
+            val_int = int(m.group(1))
+            if 50 <= val_int <= 2000:
+                values.append(("calories", val_int, it))
+            fixed = _fix_dist(float(val_int), "")
+            if 0.1 <= fixed <= 50:
+                values.append(("distance", fixed, it))
+        # Float distance
+        m = re.match(r"^(\d+\.\d+)$", t)
+        if m:
+            val = float(m.group(1))
+            if 0.1 <= val <= 50:
+                values.append(("distance", val, it))
+
+    for label_type, lbl in labels:
+        best = None
+        best_score = None
+        for vtype, val, vit in values:
+            if vit["cy"] >= lbl["cy"]:
+                continue
+            dx = abs(vit["cx"] - lbl["cx"])
+            if dx > threshold_x:
+                continue
+            score = dx
+            if vtype == label_type:
+                score -= 10000
+            if best is None or score < best_score:
+                best = (val, vtype)
+                best_score = score
+
+        if best:
+            val, vtype = best
+            if label_type == "time" and result["duration_min"] is None:
+                result["duration_min"] = float(val)
+            elif label_type == "calories" and result["calories"] is None:
+                result["calories"] = int(val)
+            elif label_type == "distance" and result["distance"] is None:
+                result["distance"] = float(val)
+
+    return result
+
+
+def parse_ocr_text(text, raw=None, img_size=None) -> dict:
+    """Parse OCR output from tesseract (str) or easyocr (list[str] or raw tuples)."""
     result: dict = {"duration_min": None, "calories": None, "distance": None}
     if not text:
         return result
+
+    if raw is not None and img_size is not None:
+        spatial = _parse_spatial(raw, img_size)
+        if any(spatial.values()):
+            return spatial
 
     if isinstance(text, str):
         texts = text.splitlines()
@@ -224,7 +320,7 @@ def parse_ocr_text(text) -> dict:
         texts = text
         full_text = " ".join(str(t) for t in texts).lower()
 
-    # DURATION
+    # DURATION — global patterns first
     m = re.search(r"time\s*(?:elapsed\s*)?(\d{1,2}):(\d{2})(?::(\d{2}))?", full_text)
     if not m:
         m = re.search(r"elapsed\s*(\d{1,2}):(\d{2})(?::(\d{2}))?", full_text)
@@ -244,27 +340,25 @@ def parse_ocr_text(text) -> dict:
             if 1 <= val <= 300:
                 result["duration_min"] = val
 
-    # Smooshed 4-digit time after "time" label → MMSS
+    # Smooshed 4-digit time anywhere → MMSS
     if not result["duration_min"]:
-        for i, t in enumerate(texts):
-            if re.search(r"time|elapsed", str(t), re.I):
-                for j in range(i + 1, min(i + 2, len(texts))):
-                    m = re.match(r"^(\d{3,4})$", str(texts[j]))
-                    if m:
-                        num = m.group(1)
-                        mm, ss = int(num[:2]), int(num[2:])
-                        if 0 <= mm <= 180 and 0 <= ss <= 59:
-                            val = mm + ss / 60
-                            if 1 <= val <= 300:
-                                result["duration_min"] = val
-                                break
-                if result["duration_min"]:
-                    break
+        for t in texts:
+            m = re.match(r"^(\d{3,4})$", str(t))
+            if m:
+                num = m.group(1)
+                mm, ss = int(num[:2]), int(num[2:])
+                if 0 <= mm <= 180 and 0 <= ss <= 59:
+                    val = mm + ss / 60
+                    if 1 <= val <= 300:
+                        result["duration_min"] = val
+                        break
 
-    # CALORIES — look for label then take next numeric item
+    # CALORIES — bidirectional scan around label
     for i, t in enumerate(texts):
         if re.search(r"calories|cal\b", str(t), re.I):
-            for j in range(i + 1, min(len(texts), i + 3)):
+            for j in range(max(0, i - 5), min(len(texts), i + 4)):
+                if j == i:
+                    continue
                 m = re.search(r"(\d{2,4})", str(texts[j]))
                 if m:
                     val = int(m.group(1))
@@ -274,10 +368,12 @@ def parse_ocr_text(text) -> dict:
             if result["calories"]:
                 break
 
-    # DISTANCE — look for label then take next numeric item
+    # DISTANCE — bidirectional scan around label
     for i, t in enumerate(texts):
         if re.search(r"distance|dist\b", str(t), re.I):
-            for j in range(i + 1, min(len(texts), i + 3)):
+            for j in range(max(0, i - 5), min(len(texts), i + 4)):
+                if j == i:
+                    continue
                 item = str(texts[j])
                 m = re.search(r"(\d+\.\d+)", item)
                 if m:
@@ -289,6 +385,13 @@ def parse_ocr_text(text) -> dict:
                 if m:
                     val = float(m.group(1))
                     val = _fix_dist(val, m.group(2).lower())
+                    if 0.1 <= val <= 50:
+                        result["distance"] = val
+                        break
+                # Try plain integer with _fix_dist
+                m = re.search(r"^(\d+)$", item)
+                if m:
+                    val = _fix_dist(float(m.group(1)), "")
                     if 0.1 <= val <= 50:
                         result["distance"] = val
                         break
@@ -366,7 +469,7 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         raw = reader.readtext(np.array(img))
         texts = [r[1] for r in raw]
         logger.info("EasyOCR texts: %s", texts)
-        ocr_result = parse_ocr_text(texts)
+        ocr_result = parse_ocr_text(texts, raw=raw, img_size=img.size)
         logger.info("EasyOCR parsed: %s", ocr_result)
     except Exception as e:
         logger.info("EasyOCR skipped: %s", e)
