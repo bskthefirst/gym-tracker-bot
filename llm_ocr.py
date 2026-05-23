@@ -71,7 +71,7 @@ def llm_ocr(image_path: str) -> Optional[dict]:
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": os.getenv("LLM_OCR_MODEL", "openai/gpt-4o-mini"),
+                    "model": os.getenv("LLM_OCR_MODEL", "moonshotai/kimi-k2.6"),
                     "messages": messages,
                     "max_tokens": 300,
                 },

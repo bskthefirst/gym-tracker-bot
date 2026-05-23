@@ -17,6 +17,7 @@ from telegram.ext import (
 
 import config
 import db
+import llm_ocr
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -461,18 +462,25 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     ocr_result = {}
     try:
-        import easyocr
-        import numpy as np
-        from PIL import Image
-        reader = easyocr.Reader(["en"], gpu=False)
-        img = Image.open(path)
-        raw = reader.readtext(np.array(img))
-        texts = [r[1] for r in raw]
-        logger.info("EasyOCR texts: %s", texts)
-        ocr_result = parse_ocr_text(texts, raw=raw, img_size=img.size)
-        logger.info("EasyOCR parsed: %s", ocr_result)
+        ocr_result = llm_ocr.llm_ocr(path) or {}
+        logger.info("LLM OCR result: %s", ocr_result)
     except Exception as e:
-        logger.info("EasyOCR skipped: %s", e)
+        logger.info("LLM OCR skipped: %s", e)
+
+    if not any(ocr_result.values()):
+        try:
+            import easyocr
+            import numpy as np
+            from PIL import Image
+            reader = easyocr.Reader(["en"], gpu=False)
+            img = Image.open(path)
+            raw = reader.readtext(np.array(img))
+            texts = [r[1] for r in raw]
+            logger.info("EasyOCR texts: %s", texts)
+            ocr_result = parse_ocr_text(texts, raw=raw, img_size=img.size)
+            logger.info("EasyOCR parsed: %s", ocr_result)
+        except Exception as e:
+            logger.info("EasyOCR skipped: %s", e)
 
     if not any(ocr_result.values()):
         try:
