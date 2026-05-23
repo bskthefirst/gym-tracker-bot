@@ -1813,6 +1813,16 @@ def main() -> None:
     application.add_handler(weight_conv)
     application.add_handler(conv)
 
+    # Catch-all for plain text outside any conversation
+    async def _fallback_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_text(
+            "I'm not sure what you mean.\n"
+            "• /log — log a workout\n"
+            "• /today — today's summary\n"
+            "• /cancel — cancel current conversation"
+        )
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, _fallback_text))
+
     job_queue = application.job_queue
     job_queue.run_daily(daily_report, time=datetime.time(hour=config.DAILY_REPORT_HOUR, minute=0))
     # Morning challenge — Mon/Wed/Fri 8:10 AM CDT
