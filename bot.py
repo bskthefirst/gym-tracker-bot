@@ -2,6 +2,7 @@ import os
 import re
 import datetime
 import logging
+import asyncio
 from typing import Optional
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
@@ -23,6 +24,17 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# Pre-load EasyOCR reader so fallback is instant
+try:
+    import easyocr
+    import numpy as np
+    from PIL import Image
+    _EASYOCR_READER = easyocr.Reader(["en"], gpu=False)
+    logger.info("EasyOCR pre-loaded")
+except Exception as e:
+    logger.warning("EasyOCR not available: %s", e)
+    _EASYOCR_READER = None
 
 # Conversation states
 PHOTO, TYPE, DURATION, CALORIES, DISTANCE, CONFIRM, WAITING_WEIGHT = range(7)
@@ -460,39 +472,61 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return ConversationHandler.END
     context.user_data["photo_path"] = path
 
-    ocr_result = {}
-    try:
-        ocr_result = llm_ocr.llm_ocr(path) or {}
-        logger.info("LLM OCR result: %s", ocr_result)
-    except Exception as e:
-        logger.info("LLM OCR skipped: %s", e)
-
-    if not any(ocr_result.values()):
+    def _ocr_easy(path: str) -> dict:
+        if _EASYOCR_READER is None:
+            return {}
         try:
-            import easyocr
-            import numpy as np
             from PIL import Image
-            reader = easyocr.Reader(["en"], gpu=False)
+            import numpy as np
             img = Image.open(path)
-            raw = reader.readtext(np.array(img))
+            raw = _EASYOCR_READER.readtext(np.array(img))
             texts = [r[1] for r in raw]
-            logger.info("EasyOCR texts: %s", texts)
-            ocr_result = parse_ocr_text(texts, raw=raw, img_size=img.size)
-            logger.info("EasyOCR parsed: %s", ocr_result)
+            result = parse_ocr_text(texts, raw=raw, img_size=img.size)
+            logger.info("EasyOCR result: %s", result)
+            return result
         except Exception as e:
-            logger.info("EasyOCR skipped: %s", e)
+            logger.info("EasyOCR failed: %s", e)
+            return {}
 
-    if not any(ocr_result.values()):
+    def _ocr_tesseract(path: str) -> dict:
         try:
             import pytesseract
             from PIL import Image
             pytesseract.pytesseract.tesseract_cmd = "/opt/homebrew/bin/tesseract"
             text = pytesseract.image_to_string(Image.open(path))
-            logger.info("Tesseract raw text: %r", text)
-            ocr_result = parse_ocr_text(text)
-            logger.info("Tesseract parsed: %s", ocr_result)
+            result = parse_ocr_text(text)
+            logger.info("Tesseract result: %s", result)
+            return result
         except Exception as e:
-            logger.info("Tesseract OCR skipped: %s", e)
+            logger.info("Tesseract failed: %s", e)
+            return {}
+
+    # Run LLM and EasyOCR in parallel threads.
+    # LLM is higher quality; EasyOCR is the instant fallback if LLM fails.
+    easy_task = asyncio.create_task(asyncio.to_thread(_ocr_easy, path))
+    llm_task = asyncio.create_task(asyncio.to_thread(llm_ocr.llm_ocr, path))
+
+    ocr_result = {}
+    llm_result = await llm_task
+    if isinstance(llm_result, dict) and llm_ocr._is_valid(llm_result):
+        ocr_result = llm_result
+        logger.info("OCR winner: LLM → %s", ocr_result)
+        easy_task.cancel()
+    else:
+        logger.warning("LLM OCR failed or invalid, trying EasyOCR fallback")
+        try:
+            easy_result = await easy_task
+            if isinstance(easy_result, dict) and any(easy_result.values()):
+                ocr_result = easy_result
+                logger.info("OCR winner: EasyOCR fallback → %s", ocr_result)
+        except asyncio.CancelledError:
+            pass
+
+    # Final fallback: Tesseract
+    if not ocr_result:
+        ocr_result = await asyncio.to_thread(_ocr_tesseract, path)
+        if ocr_result:
+            logger.info("OCR winner: Tesseract → %s", ocr_result)
 
     context.user_data["ocr"] = ocr_result
 
