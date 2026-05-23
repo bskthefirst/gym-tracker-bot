@@ -14,19 +14,19 @@ def _encode_image(path: str) -> str:
 
 def llm_ocr(image_path: str) -> Optional[dict]:
     """Optional LLM-based OCR. Falls back to None if no API key configured."""
+    opencode_go_key = os.getenv("OPENCODE_GO_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
     kimi_key = os.getenv("KIMI_API_KEY")
 
-    if not openai_key and not openrouter_key and not kimi_key:
+    if not opencode_go_key and not openai_key and not openrouter_key and not kimi_key:
         return None
 
     base64_image = _encode_image(image_path)
     prompt = (
-        "Extract workout stats from this gym machine screen photo. "
-        "Return ONLY a JSON object with keys: duration_min (float, minutes), "
-        "calories (int), distance (float, km if visible). "
-        "If a value is not visible, omit it or set to null."
+        "Read the numbers from this gym machine screen. "
+        "Return ONLY a JSON object: {\"duration_min\": float, \"calories\": int, \"distance\": float}. "
+        "If a value is missing, omit it. Do not explain."
     )
 
     messages = [
@@ -45,7 +45,25 @@ def llm_ocr(image_path: str) -> Optional[dict]:
     ]
 
     try:
-        if kimi_key:
+        if opencode_go_key:
+            import requests
+            base_url = os.getenv("OPENCODE_GO_BASE_URL", "https://opencode.ai/zen/go/v1")
+            resp = requests.post(
+                f"{base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {opencode_go_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": os.getenv("LLM_OCR_MODEL", "kimi-k2.6"),
+                    "messages": messages,
+                    "max_tokens": 4000,
+                },
+                timeout=60,
+            )
+            resp.raise_for_status()
+            content = resp.json()["choices"][0]["message"]["content"]
+        elif kimi_key:
             import requests
             resp = requests.post(
                 "https://api.moonshot.cn/v1/chat/completions",
@@ -56,9 +74,9 @@ def llm_ocr(image_path: str) -> Optional[dict]:
                 json={
                     "model": os.getenv("LLM_OCR_MODEL", "kimi-k2-6"),
                     "messages": messages,
-                    "max_tokens": 300,
+                    "max_tokens": 4000,
                 },
-                timeout=30,
+                timeout=60,
             )
             resp.raise_for_status()
             content = resp.json()["choices"][0]["message"]["content"]
@@ -73,9 +91,9 @@ def llm_ocr(image_path: str) -> Optional[dict]:
                 json={
                     "model": os.getenv("LLM_OCR_MODEL", "moonshotai/kimi-k2.6"),
                     "messages": messages,
-                    "max_tokens": 300,
+                    "max_tokens": 4000,
                 },
-                timeout=30,
+                timeout=60,
             )
             resp.raise_for_status()
             content = resp.json()["choices"][0]["message"]["content"]
@@ -85,7 +103,7 @@ def llm_ocr(image_path: str) -> Optional[dict]:
             resp = client.chat.completions.create(
                 model=os.getenv("LLM_OCR_MODEL", "gpt-4o-mini"),
                 messages=messages,
-                max_tokens=300,
+                max_tokens=4000,
             )
             content = resp.choices[0].message.content
         else:
