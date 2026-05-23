@@ -14,19 +14,20 @@ logger = logging.getLogger(__name__)
 _HTTP_SESSION = requests.Session()
 
 
-def _encode_image(path: str, max_width: int = 384, crop_ratio: float = 1.0) -> str:
+def _encode_image(path: str, max_width: int = 384) -> str:
     img = Image.open(path)
     w, h = img.size
+    # Auto-crop phone screenshots: if image is tall, crop to center 45% where the machine is
+    if h > w * 1.5:
+        top = int(h * 0.28)
+        bottom = int(h * 0.72)
+        left = int(w * 0.05)
+        right = int(w * 0.95)
+        img = img.crop((left, top, right, bottom))
+        w, h = img.size
     if w > max_width:
         ratio = max_width / w
         img = img.resize((max_width, int(h * ratio)), Image.LANCZOS)
-        w, h = img.size
-    if crop_ratio < 1.0:
-        left = w * (1 - crop_ratio) / 2
-        top = h * (1 - crop_ratio) / 2
-        right = w - left
-        bottom = h - top
-        img = img.crop((left, top, right, bottom))
     buf = io.BytesIO()
     img.convert("RGB").save(buf, format="JPEG", quality=85)
     return base64.b64encode(buf.getvalue()).decode("utf-8")

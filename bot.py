@@ -479,6 +479,10 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             from PIL import Image
             import numpy as np
             img = Image.open(path)
+            w, h = img.size
+            # Auto-crop phone screenshots
+            if h > w * 1.5:
+                img = img.crop((int(w*0.05), int(h*0.28), int(w*0.95), int(h*0.72)))
             raw = _EASYOCR_READER.readtext(np.array(img))
             texts = [r[1] for r in raw]
             result = parse_ocr_text(texts, raw=raw, img_size=img.size)
@@ -493,7 +497,12 @@ async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             import pytesseract
             from PIL import Image
             pytesseract.pytesseract.tesseract_cmd = "/opt/homebrew/bin/tesseract"
-            text = pytesseract.image_to_string(Image.open(path))
+            img = Image.open(path)
+            w, h = img.size
+            # Auto-crop phone screenshots
+            if h > w * 1.5:
+                img = img.crop((int(w*0.05), int(h*0.28), int(w*0.95), int(h*0.72)))
+            text = pytesseract.image_to_string(img)
             result = parse_ocr_text(text)
             logger.info("Tesseract result: %s", result)
             return result
