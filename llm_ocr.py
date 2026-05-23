@@ -3,13 +3,21 @@ import base64
 import json
 import logging
 from typing import Optional
+from PIL import Image
+import io
 
 logger = logging.getLogger(__name__)
 
 
-def _encode_image(path: str) -> str:
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
+def _encode_image(path: str, max_width: int = 512) -> str:
+    img = Image.open(path)
+    w, h = img.size
+    if w > max_width:
+        ratio = max_width / w
+        img = img.resize((max_width, int(h * ratio)), Image.LANCZOS)
+    buf = io.BytesIO()
+    img.convert("RGB").save(buf, format="JPEG", quality=85)
+    return base64.b64encode(buf.getvalue()).decode("utf-8")
 
 
 def llm_ocr(image_path: str) -> Optional[dict]:
@@ -55,11 +63,11 @@ def llm_ocr(image_path: str) -> Optional[dict]:
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": os.getenv("LLM_OCR_MODEL", "kimi-k2.6"),
+                    "model": os.getenv("LLM_OCR_MODEL", "qwen3.6-plus"),
                     "messages": messages,
-                    "max_tokens": 4000,
+                    "max_tokens": 300,
                 },
-                timeout=60,
+                timeout=20,
             )
             resp.raise_for_status()
             content = resp.json()["choices"][0]["message"]["content"]
@@ -74,9 +82,9 @@ def llm_ocr(image_path: str) -> Optional[dict]:
                 json={
                     "model": os.getenv("LLM_OCR_MODEL", "kimi-k2-6"),
                     "messages": messages,
-                    "max_tokens": 4000,
+                    "max_tokens": 300,
                 },
-                timeout=60,
+                timeout=20,
             )
             resp.raise_for_status()
             content = resp.json()["choices"][0]["message"]["content"]
@@ -91,9 +99,9 @@ def llm_ocr(image_path: str) -> Optional[dict]:
                 json={
                     "model": os.getenv("LLM_OCR_MODEL", "moonshotai/kimi-k2.6"),
                     "messages": messages,
-                    "max_tokens": 4000,
+                    "max_tokens": 300,
                 },
-                timeout=60,
+                timeout=20,
             )
             resp.raise_for_status()
             content = resp.json()["choices"][0]["message"]["content"]
@@ -103,7 +111,7 @@ def llm_ocr(image_path: str) -> Optional[dict]:
             resp = client.chat.completions.create(
                 model=os.getenv("LLM_OCR_MODEL", "gpt-4o-mini"),
                 messages=messages,
-                max_tokens=4000,
+                max_tokens=300,
             )
             content = resp.choices[0].message.content
         else:
