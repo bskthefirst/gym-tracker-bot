@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-05-24T20:32:55.181540Z",
+  "exported_at": "2026-05-24T20:33:10.697699Z",
   "workouts": [
+    {
+      "id": 124,
+      "date": "2026-05-24",
+      "day": "Sun",
+      "type": "Cardio",
+      "machine": "\ud83d\udeb2 Indoor Cycling",
+      "duration_min": 16.2167,
+      "calories": 106.0,
+      "adj_calories": null,
+      "level": null,
+      "distance": 3.28,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": null,
+      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260524_133231.jpg",
+      "created_at": "2026-05-24T15:33:07.512890"
+    },
     {
       "id": 123,
       "date": "2026-05-24",
