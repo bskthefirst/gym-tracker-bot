@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-05-24T15:03:32.620891Z",
+  "exported_at": "2026-05-24T15:39:20.327831Z",
   "workouts": [
     {
       "id": 120,
@@ -1246,7 +1246,7 @@
   ],
   "body_metrics": [
     {
-      "id": 2,
+      "id": 3,
       "date": "2026-05-24",
       "weight_kg": 85.5,
       "waist_cm": null,
