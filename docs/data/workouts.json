@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-05-27T17:07:19.982822Z",
+  "exported_at": "2026-05-27T17:08:39.437831Z",
   "workouts": [
+    {
+      "id": 131,
+      "date": "2026-05-27",
+      "day": "Wed",
+      "type": "Cardio",
+      "machine": "\ud83d\udeb2 Indoor Cycling",
+      "duration_min": 62.0,
+      "calories": 409.0,
+      "adj_calories": 409.0,
+      "level": null,
+      "distance": 12.4,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": null,
+      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260527_120810.jpg",
+      "created_at": "2026-05-27 17:08:39"
+    },
     {
       "id": 130,
       "date": "2026-05-27",
@@ -1442,8 +1460,8 @@
   },
   "streak": 2,
   "prs": {
-    "\u2b07\ufe0f Lat Pulldown": 55.0,
     "\ud83d\udeb2 Indoor Cycling": 444.0,
+    "\u2b07\ufe0f Lat Pulldown": 55.0,
     "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
     "\ud83c\udfcb\ufe0f Leg Press": 60.0,
     "\ud83c\udfcb\ufe0f Strength- Others": 55.0,
