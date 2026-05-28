@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-05-28T18:01:56.473816Z",
+  "exported_at": "2026-05-28T18:32:32.710351Z",
   "workouts": [
+    {
+      "id": 137,
+      "date": "2026-05-28",
+      "day": "Thu",
+      "type": "Cardio",
+      "machine": "\ud83e\ude9c Stair Master",
+      "duration_min": 21.0,
+      "calories": 217.0,
+      "adj_calories": 217.0,
+      "level": null,
+      "distance": null,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": null,
+      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260528_133156.jpg",
+      "created_at": "2026-05-28 18:32:32"
+    },
     {
       "id": 136,
       "date": "2026-05-28",
@@ -1550,6 +1568,7 @@
   },
   "streak": 3,
   "prs": {
+    "\ud83e\ude9c Stair Master": 217.0,
     "\ud83d\udeb2 Indoor Cycling": 444.0,
     "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
     "\ud83d\udcaa Bicep-Tricep Curl": 35.0,
@@ -1557,7 +1576,6 @@
     "\u2b07\ufe0f Lat Pulldown": 55.0,
     "\ud83c\udfcb\ufe0f Strength- Others": 55.0,
     "\ud83e\uddb5 Leg": 60.0,
-    "\ud83e\ude9c Stair Master": 188.0,
     "Incline Treadmill": 590.0,
     "Indoor Cycling": 483.0,
     "Bicep-Tricep Curl": 82.0,
