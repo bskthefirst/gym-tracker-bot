@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-05-29T15:11:03.842491Z",
+  "exported_at": "2026-05-29T16:02:04.299679Z",
   "workouts": [
+    {
+      "id": 139,
+      "date": "2026-05-29",
+      "day": "Fri",
+      "type": "Cardio",
+      "machine": "\ud83e\ude9c Stair Master",
+      "duration_min": 40.0,
+      "calories": 349.0,
+      "adj_calories": 349.0,
+      "level": null,
+      "distance": null,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": null,
+      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260529_110116.jpg",
+      "created_at": "2026-05-29 16:02:04"
+    },
     {
       "id": 138,
       "date": "2026-05-29",
@@ -1593,8 +1611,8 @@
   },
   "streak": 4,
   "prs": {
+    "\ud83e\ude9c Stair Master": 349.0,
     "\u2b07\ufe0f Lat Pulldown": 82.0,
-    "\ud83e\ude9c Stair Master": 217.0,
     "\ud83d\udeb2 Indoor Cycling": 444.0,
     "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
     "\ud83d\udcaa Bicep-Tricep Curl": 35.0,
