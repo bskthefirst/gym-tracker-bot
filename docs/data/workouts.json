@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-05-31T17:09:03.834994Z",
+  "exported_at": "2026-05-31T17:34:28.411191Z",
   "workouts": [
+    {
+      "id": 148,
+      "date": "2026-05-31",
+      "day": "Sun",
+      "type": "Cardio",
+      "machine": "\ud83c\udfd4\ufe0f Incline Treadmill",
+      "duration_min": 41.36666666666667,
+      "calories": 459.0,
+      "adj_calories": 459.0,
+      "level": null,
+      "distance": 2.12,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": null,
+      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260531_123342.jpg",
+      "created_at": "2026-05-31 17:34:28"
+    },
     {
       "id": 147,
       "date": "2026-05-31",
@@ -1755,10 +1773,10 @@
   },
   "streak": 6,
   "prs": {
+    "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
     "\ud83c\udfcb\ufe0f Strength- Others": 110.0,
     "\ud83c\udf00 Leg Curl": 75.0,
     "\ud83d\udeb2 Indoor Cycling": 444.0,
-    "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
     "\ud83c\udfcb\ufe0f Leg Press": 120.0,
     "\ud83e\ude9c Stair Master": 349.0,
     "\u2b07\ufe0f Lat Pulldown": 82.0,
