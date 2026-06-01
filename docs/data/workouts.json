@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-06-01T16:55:08.489249Z",
+  "exported_at": "2026-06-01T17:36:38.569779Z",
   "workouts": [
+    {
+      "id": 153,
+      "date": "2026-06-01",
+      "day": "Mon",
+      "type": "Strength",
+      "machine": "\ud83c\udfcb\ufe0f Leg Press",
+      "duration_min": 15.0,
+      "calories": 90.0,
+      "adj_calories": 90.0,
+      "level": null,
+      "distance": null,
+      "floors_steps": null,
+      "weight_load": "120.0",
+      "sets_reps": "6x6",
+      "notes": null,
+      "photo_path": null,
+      "created_at": "2026-06-01 17:36:38"
+    },
     {
       "id": 152,
       "date": "2026-06-01",
