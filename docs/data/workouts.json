@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-06-03T18:09:08.666153Z",
+  "exported_at": "2026-06-03T19:13:23.706547Z",
   "workouts": [
+    {
+      "id": 161,
+      "date": "2026-06-03",
+      "day": "Wed",
+      "type": "Cardio",
+      "machine": "\ud83c\udfd4\ufe0f Incline Treadmill",
+      "duration_min": 41.0,
+      "calories": 419.0,
+      "adj_calories": 419.0,
+      "level": null,
+      "distance": 2.11,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": null,
+      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260603_141247.jpg",
+      "created_at": "2026-06-03 19:13:23"
+    },
     {
       "id": 160,
       "date": "2026-06-03",
@@ -1989,9 +2007,9 @@
   },
   "streak": 9,
   "prs": {
+    "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
     "\ud83d\udeb2 Indoor Cycling": 444.0,
     "\ud83d\udcaa Bicep-Tricep Curl": 52.0,
-    "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
     "\u2b07\ufe0f Lat Pulldown": 110.0,
     "\ud83c\udfcb\ufe0f Leg Press": 120.0,
     "\ud83c\udfcb\ufe0f Strength- Others": 110.0,
