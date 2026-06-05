@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-06-04T17:58:58.157307Z",
+  "exported_at": "2026-06-05T17:56:52.289981Z",
   "workouts": [
+    {
+      "id": 165,
+      "date": "2026-06-05",
+      "day": "Fri",
+      "type": "Strength",
+      "machine": "\u2b07\ufe0f Lat Pulldown",
+      "duration_min": 15.0,
+      "calories": 82.0,
+      "adj_calories": 82.0,
+      "level": null,
+      "distance": null,
+      "floors_steps": null,
+      "weight_load": "50.0",
+      "sets_reps": "6x6",
+      "notes": null,
+      "photo_path": null,
+      "created_at": "2026-06-05 17:56:52"
+    },
     {
       "id": 164,
       "date": "2026-06-04",
@@ -2059,13 +2077,13 @@
     "goal_weight_kg": "80",
     "target_date": "2026-07-03"
   },
-  "streak": 10,
+  "streak": 11,
   "prs": {
+    "\u2b07\ufe0f Lat Pulldown": 110.0,
     "\ud83d\udeb2 Indoor Cycling": 444.0,
     "\ud83c\udfcb\ufe0f Leg Press": 120.0,
     "\ud83d\udcaa Bicep-Tricep Curl": 52.0,
     "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
-    "\u2b07\ufe0f Lat Pulldown": 110.0,
     "\ud83c\udfcb\ufe0f Strength- Others": 110.0,
     "\ud83c\udf00 Leg Curl": 75.0,
     "\ud83e\ude9c Stair Master": 349.0,
