@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-06-07T20:53:14.966883Z",
+  "exported_at": "2026-06-08T14:30:27.617217Z",
   "workouts": [
     {
       "id": 177,
@@ -2254,6 +2254,13 @@
   ],
   "body_metrics": [
     {
+      "id": 6,
+      "date": "2026-06-08",
+      "weight_kg": 83.5,
+      "waist_cm": null,
+      "notes": null
+    },
+    {
       "id": 5,
       "date": "2026-05-29",
       "weight_kg": 84.5,
@@ -2293,7 +2300,7 @@
     "goal_weight_kg": "80",
     "target_date": "2026-07-03"
   },
-  "streak": 13,
+  "streak": 0,
   "prs": {
     "\ud83d\udeb2 Indoor Cycling": 444.0,
     "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
