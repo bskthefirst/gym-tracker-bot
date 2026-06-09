@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-06-09T16:28:30.634574Z",
+  "exported_at": "2026-06-09T17:27:52.434841Z",
   "workouts": [
+    {
+      "id": 181,
+      "date": "2026-06-09",
+      "day": "Tue",
+      "type": "Strength",
+      "machine": "\ud83c\udfcb\ufe0f Leg Press",
+      "duration_min": 15.0,
+      "calories": 90.0,
+      "adj_calories": 90.0,
+      "level": null,
+      "distance": null,
+      "floors_steps": null,
+      "weight_load": "120.0",
+      "sets_reps": "6x6",
+      "notes": null,
+      "photo_path": null,
+      "created_at": "2026-06-09 17:27:52"
+    },
     {
       "id": 180,
       "date": "2026-06-09",
@@ -2356,8 +2374,8 @@
   },
   "streak": 15,
   "prs": {
-    "\u2b07\ufe0f Lat Pulldown": 110.0,
     "\ud83c\udfcb\ufe0f Leg Press": 150.0,
+    "\u2b07\ufe0f Lat Pulldown": 110.0,
     "\ud83e\ude9c Stair Master": 400.0,
     "\ud83d\udeb2 Indoor Cycling": 444.0,
     "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
