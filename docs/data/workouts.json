@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-06-15T14:42:59.916420Z",
+  "exported_at": "2026-06-15T16:10:00.746307Z",
   "workouts": [
+    {
+      "id": 202,
+      "date": "2026-06-15",
+      "day": "Mon",
+      "type": "Cardio",
+      "machine": "\ud83c\udfd4\ufe0f Incline Treadmill",
+      "duration_min": 63.0,
+      "calories": 605.0,
+      "adj_calories": 605.0,
+      "level": null,
+      "distance": 6.6,
+      "floors_steps": null,
+      "weight_load": null,
+      "sets_reps": null,
+      "notes": null,
+      "photo_path": null,
+      "created_at": "2026-06-15 16:10:00"
+    },
     {
       "id": 201,
       "date": "2026-06-15",
@@ -2755,10 +2773,10 @@
   },
   "streak": 1,
   "prs": {
+    "\ud83c\udfd4\ufe0f Incline Treadmill": 605.0,
     "\ud83d\udcaa Bicep-Tricep Curl": 56.0,
     "\u2b07\ufe0f Lat Pulldown": 110.0,
     "\ud83d\udeb2 Indoor Cycling": 515.0,
-    "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
     "\ud83d\udcaa Chest Press": 90.0,
     "\ud83c\udfcb\ufe0f Leg Press": 150.0,
     "\ud83e\ude9c Stair Master": 400.0,
