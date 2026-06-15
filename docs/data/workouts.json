@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-06-13T19:01:47.101097Z",
+  "exported_at": "2026-06-15T14:42:28.215624Z",
   "workouts": [
+    {
+      "id": 200,
+      "date": "2026-06-15",
+      "day": "Mon",
+      "type": "Strength",
+      "machine": "\u2b07\ufe0f Lat Pulldown",
+      "duration_min": 15.0,
+      "calories": 82.0,
+      "adj_calories": 82.0,
+      "level": null,
+      "distance": null,
+      "floors_steps": null,
+      "weight_load": "58.0",
+      "sets_reps": "6x6",
+      "notes": null,
+      "photo_path": null,
+      "created_at": "2026-06-15 14:42:28"
+    },
     {
       "id": 199,
       "date": "2026-06-13",
@@ -2717,10 +2735,10 @@
     "goal_weight_kg": "80",
     "target_date": "2026-07-03"
   },
-  "streak": 19,
+  "streak": 1,
   "prs": {
-    "\ud83d\udeb2 Indoor Cycling": 515.0,
     "\u2b07\ufe0f Lat Pulldown": 110.0,
+    "\ud83d\udeb2 Indoor Cycling": 515.0,
     "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
     "\ud83d\udcaa Chest Press": 90.0,
     "\ud83c\udfcb\ufe0f Leg Press": 150.0,
