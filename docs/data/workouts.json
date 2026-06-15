@@ -1,6 +1,24 @@
 {
-  "exported_at": "2026-06-15T14:42:28.215624Z",
+  "exported_at": "2026-06-15T14:42:59.916420Z",
   "workouts": [
+    {
+      "id": 201,
+      "date": "2026-06-15",
+      "day": "Mon",
+      "type": "Strength",
+      "machine": "\ud83d\udcaa Bicep-Tricep Curl",
+      "duration_min": 10.0,
+      "calories": 35.0,
+      "adj_calories": 35.0,
+      "level": null,
+      "distance": null,
+      "floors_steps": null,
+      "weight_load": "30.0",
+      "sets_reps": "6x6",
+      "notes": null,
+      "photo_path": null,
+      "created_at": "2026-06-15 14:42:59"
+    },
     {
       "id": 200,
       "date": "2026-06-15",
@@ -2737,12 +2755,12 @@
   },
   "streak": 1,
   "prs": {
+    "\ud83d\udcaa Bicep-Tricep Curl": 56.0,
     "\u2b07\ufe0f Lat Pulldown": 110.0,
     "\ud83d\udeb2 Indoor Cycling": 515.0,
     "\ud83c\udfd4\ufe0f Incline Treadmill": 557.0,
     "\ud83d\udcaa Chest Press": 90.0,
     "\ud83c\udfcb\ufe0f Leg Press": 150.0,
-    "\ud83d\udcaa Bicep-Tricep Curl": 56.0,
     "\ud83e\ude9c Stair Master": 400.0,
     "\ud83c\udfcb\ufe0f Strength- Others": 110.0,
     "\ud83c\udf00 Leg Curl": 75.0,
