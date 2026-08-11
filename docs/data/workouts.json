@@ -1,5 +1,4 @@
 {
-  "exported_at": "2026-08-11T13:46:46.204876Z",
   "workouts": [
     {
       "id": 204,
@@ -34,7 +33,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260615_120525.jpg",
+      "photo_path": null,
       "created_at": "2026-06-15 17:05:44"
     },
     {
@@ -106,7 +105,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260613_140044.jpg",
+      "photo_path": null,
       "created_at": "2026-06-13 19:01:47"
     },
     {
@@ -142,7 +141,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260613_125705.jpg",
+      "photo_path": null,
       "created_at": "2026-06-13 17:57:43"
     },
     {
@@ -160,7 +159,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260612_132643.jpg",
+      "photo_path": null,
       "created_at": "2026-06-12 18:27:14"
     },
     {
@@ -178,7 +177,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260612_131453.jpg",
+      "photo_path": null,
       "created_at": "2026-06-12 18:15:09"
     },
     {
@@ -196,7 +195,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260612_124255.jpg",
+      "photo_path": null,
       "created_at": "2026-06-12 17:43:11"
     },
     {
@@ -250,7 +249,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260611_135014.jpg",
+      "photo_path": null,
       "created_at": "2026-06-11 18:50:36"
     },
     {
@@ -268,7 +267,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260611_131742.jpg",
+      "photo_path": null,
       "created_at": "2026-06-11 18:18:05"
     },
     {
@@ -286,7 +285,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260611_124511.jpg",
+      "photo_path": null,
       "created_at": "2026-06-11 17:45:41"
     },
     {
@@ -340,7 +339,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260610_134123.jpg",
+      "photo_path": null,
       "created_at": "2026-06-10 18:41:57"
     },
     {
@@ -376,7 +375,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260610_123829.jpg",
+      "photo_path": null,
       "created_at": "2026-06-10 17:39:21"
     },
     {
@@ -412,7 +411,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260609_122932.jpg",
+      "photo_path": null,
       "created_at": "2026-06-09 17:30:29"
     },
     {
@@ -484,7 +483,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260608_120758.jpg",
+      "photo_path": null,
       "created_at": "2026-06-08 17:08:33"
     },
     {
@@ -502,7 +501,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260607_155259.jpg",
+      "photo_path": null,
       "created_at": "2026-06-07 20:53:14"
     },
     {
@@ -520,7 +519,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260607_153244.jpg",
+      "photo_path": null,
       "created_at": "2026-06-07 20:33:05"
     },
     {
@@ -538,7 +537,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260607_150054.jpg",
+      "photo_path": null,
       "created_at": "2026-06-07 20:01:43"
     },
     {
@@ -574,7 +573,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260606_134617.jpg",
+      "photo_path": null,
       "created_at": "2026-06-06 18:46:36"
     },
     {
@@ -592,7 +591,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260606_124947.jpg",
+      "photo_path": null,
       "created_at": "2026-06-06 17:50:04"
     },
     {
@@ -664,7 +663,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260605_153512.jpg",
+      "photo_path": null,
       "created_at": "2026-06-05 20:36:09"
     },
     {
@@ -682,7 +681,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260605_150314.jpg",
+      "photo_path": null,
       "created_at": "2026-06-05 20:03:35"
     },
     {
@@ -700,7 +699,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260605_133050.jpg",
+      "photo_path": null,
       "created_at": "2026-06-05 18:31:30"
     },
     {
@@ -736,7 +735,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260604_125825.jpg",
+      "photo_path": null,
       "created_at": "2026-06-04 17:58:58"
     },
     {
@@ -790,7 +789,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260603_141247.jpg",
+      "photo_path": null,
       "created_at": "2026-06-03 19:13:23"
     },
     {
@@ -808,7 +807,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260603_130835.jpg",
+      "photo_path": null,
       "created_at": "2026-06-03 18:09:08"
     },
     {
@@ -844,7 +843,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260603_120529.jpg",
+      "photo_path": null,
       "created_at": "2026-06-03 17:05:59"
     },
     {
@@ -862,7 +861,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260602_131414.jpg",
+      "photo_path": null,
       "created_at": "2026-06-02 18:14:37"
     },
     {
@@ -880,7 +879,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260602_120434.jpg",
+      "photo_path": null,
       "created_at": "2026-06-02 17:05:12"
     },
     {
@@ -916,7 +915,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260601_132904.jpg",
+      "photo_path": null,
       "created_at": "2026-06-01 18:29:53"
     },
     {
@@ -970,7 +969,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260601_115327.jpg",
+      "photo_path": null,
       "created_at": "2026-06-01 16:54:09"
     },
     {
@@ -988,7 +987,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260531_155853.jpg",
+      "photo_path": null,
       "created_at": "2026-05-31 20:59:46"
     },
     {
@@ -1024,7 +1023,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260531_123342.jpg",
+      "photo_path": null,
       "created_at": "2026-05-31 17:34:28"
     },
     {
@@ -1078,7 +1077,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260530_151207.jpg",
+      "photo_path": null,
       "created_at": "2026-05-30 20:12:44"
     },
     {
@@ -1096,7 +1095,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260530_144811.jpg",
+      "photo_path": null,
       "created_at": "2026-05-30 19:48:44"
     },
     {
@@ -1114,7 +1113,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260530_140311.jpg",
+      "photo_path": null,
       "created_at": "2026-05-30 19:03:52"
     },
     {
@@ -1150,7 +1149,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260529_123307.jpg",
+      "photo_path": null,
       "created_at": "2026-05-29 17:33:29"
     },
     {
@@ -1168,7 +1167,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260529_120356.jpg",
+      "photo_path": null,
       "created_at": "2026-05-29 17:04:27"
     },
     {
@@ -1186,7 +1185,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260529_110116.jpg",
+      "photo_path": null,
       "created_at": "2026-05-29 16:02:04"
     },
     {
@@ -1222,7 +1221,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260528_133156.jpg",
+      "photo_path": null,
       "created_at": "2026-05-28 18:32:32"
     },
     {
@@ -1240,7 +1239,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260528_130106.jpg",
+      "photo_path": null,
       "created_at": "2026-05-28 18:01:56"
     },
     {
@@ -1258,7 +1257,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260528_115845.jpg",
+      "photo_path": null,
       "created_at": "2026-05-28 16:59:16"
     },
     {
@@ -1312,7 +1311,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260527_143500.jpg",
+      "photo_path": null,
       "created_at": "2026-05-27 19:35:29"
     },
     {
@@ -1330,7 +1329,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260527_120810.jpg",
+      "photo_path": null,
       "created_at": "2026-05-27 17:08:39"
     },
     {
@@ -1366,7 +1365,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260526_171720.jpg",
+      "photo_path": null,
       "created_at": "2026-05-26 22:18:02"
     },
     {
@@ -1384,7 +1383,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260526_150823.jpg",
+      "photo_path": null,
       "created_at": "2026-05-26 20:09:29"
     },
     {
@@ -1402,7 +1401,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260526_150648.jpg",
+      "photo_path": null,
       "created_at": "2026-05-26 20:08:14"
     },
     {
@@ -1438,7 +1437,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260524_133231.jpg",
+      "photo_path": null,
       "created_at": "2026-05-24T15:33:07.512890"
     },
     {
@@ -1456,7 +1455,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260524_133231.jpg",
+      "photo_path": null,
       "created_at": "2026-05-24 18:34:54"
     },
     {
@@ -1492,7 +1491,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260524_121712.jpg",
+      "photo_path": null,
       "created_at": "2026-05-24 17:18:13"
     },
     {
@@ -1510,7 +1509,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260523_161304.jpg",
+      "photo_path": null,
       "created_at": "2026-05-23 21:14:39"
     },
     {
@@ -1528,7 +1527,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260523_144337.jpg",
+      "photo_path": null,
       "created_at": "2026-05-23 19:48:23"
     },
     {
@@ -1546,7 +1545,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260523_133302.jpg",
+      "photo_path": null,
       "created_at": "2026-05-23 18:33:58"
     },
     {
@@ -1600,7 +1599,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260522_141936.jpg",
+      "photo_path": null,
       "created_at": "2026-05-22 19:20:52"
     },
     {
@@ -1618,7 +1617,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260522_114033.jpg",
+      "photo_path": null,
       "created_at": "2026-05-22 16:41:24"
     },
     {
@@ -1636,7 +1635,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260522_110630.jpg",
+      "photo_path": null,
       "created_at": "2026-05-22 16:07:08"
     },
     {
@@ -1654,7 +1653,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260522_110257.jpg",
+      "photo_path": null,
       "created_at": "2026-05-22 16:03:59"
     },
     {
@@ -1690,7 +1689,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260521_170008.jpg",
+      "photo_path": null,
       "created_at": "2026-05-21 22:00:53"
     },
     {
@@ -1708,7 +1707,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260521_140520.jpg",
+      "photo_path": null,
       "created_at": "2026-05-21 19:06:39"
     },
     {
@@ -1726,7 +1725,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260521_131044.jpg",
+      "photo_path": null,
       "created_at": "2026-05-21 18:11:19"
     },
     {
@@ -1780,7 +1779,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260520_125644.jpg",
+      "photo_path": null,
       "created_at": "2026-05-20 17:59:21"
     },
     {
@@ -1816,7 +1815,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260520_122935.jpg",
+      "photo_path": null,
       "created_at": "2026-05-20 17:30:15"
     },
     {
@@ -1834,7 +1833,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260519_164312.jpg",
+      "photo_path": null,
       "created_at": "2026-05-19 21:43:57"
     },
     {
@@ -1852,7 +1851,7 @@
       "weight_load": null,
       "sets_reps": null,
       "notes": null,
-      "photo_path": "/Users/billkim/gym-tracker/photos/workout_20260519_143746.jpg",
+      "photo_path": null,
       "created_at": "2026-05-19 19:38:43"
     },
     {
@@ -2832,5 +2831,6 @@
     "Leg": 48.0,
     "Stair Master": 560.0,
     "Strength- Others": 82.0
-  }
+  },
+  "exported_at": "2026-08-11T14:02:52.944567Z"
 }
